@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EV Charge – Giriş Yap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green: #00e5a0;
+            --green2: #00b87a;
+            --dark: #0a0e1a;
+            --card: #121829;
+            --border: rgba(0, 229, 160, .18);
+            --text: #e4eaf6;
+            --muted: #7a8aab;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--dark);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* ── animated background particles ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 80%, rgba(0, 229, 160, .08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0, 120, 255, .07) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        /* ── card ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 44px 44px 40px;
+            width: min(460px, 94vw);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── logo / title ── */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--green), #00a8e8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+
+        .logo-text span {
+            color: var(--green);
+        }
+
+        h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        /* ── inputs ── */
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 7px;
+            letter-spacing: .3px;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 16px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color .25s, box-shadow .25s;
+        }
+
+        input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(0, 229, 160, .12);
+        }
+
+        /* ── divider ── */
+        .divider {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            margin: 24px 0 20px;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 38%;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        /* ══════════════════════════════════
+       EV CHARGING ANIMATION AREA
+    ══════════════════════════════════ */
+        .charge-btn-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .charge-hint {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: .4px;
+            transition: color .3s;
+        }
+
+        /* Scene container */
+        .scene {
+            width: 100%;
+            height: 110px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Car SVG */
+        .car-wrap {
+            position: absolute;
+            left: 20px;
+            bottom: 12px;
+            transition: transform .5s cubic-bezier(.4, 0, .2, 1), filter .5s;
+        }
+
+        .car-wrap svg {
+            width: 130px;
+            height: auto;
+            display: block;
+        }
+
+        /* Charging port on car (right side) */
+        .port {
+            position: absolute;
+            right: 12px;
+            bottom: 30px;
+            width: 18px;
+            height: 28px;
+            background: #1a2540;
+            border: 2px solid var(--muted);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color .3s, box-shadow .3s;
+        }
+
+        .port::after {
+            content: '';
+            width: 6px;
+            height: 14px;
+            background: var(--muted);
+            border-radius: 2px;
+            transition: background .3s;
+        }
+
+        /* Charger stand */
+        .charger-stand {
+            position: absolute;
+            right: 18px;
+            bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .charger-box {
+            width: 36px;
+            height: 58px;
+            background: linear-gradient(160deg, #1c2b44, #111a2e);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0, 229, 160, .1);
+        }
+
+        .charger-screen {
+            width: 20px;
+            height: 28px;
+            background: #0d1a2a;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+        }
+
+        .charger-pole {
+            width: 4px;
+            height: 10px;
+            background: #1c2b44;
+            border-radius: 2px;
+        }
+
+        .charger-base {
+            width: 44px;
+            height: 6px;
+            background: #1c2b44;
+            border-radius: 3px;
+        }
+
+        /* Cable */
+        .cable-wrap {
+            position: absolute;
+            /* starts at charger right side, drapes toward the car */
+            right: 56px;
+            bottom: 38px;
+            cursor: pointer;
+        }
+
+        .cable-svg {
+            overflow: visible;
+        }
+
+        /* Plug head (draggable) */
+        .plug {
+            position: absolute;
+            width: 28px;
+            height: 40px;
+            background: linear-gradient(160deg, #1e3050, #0f1f38);
+            border: 1.5px solid var(--green);
+            border-radius: 6px 6px 10px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: grab;
+            transition: box-shadow .25s, border-color .25s;
+            z-index: 10;
+            /* starting position (near charger) */
+            right: 64px;
+            bottom: 52px;
+        }
+
+        .plug:hover {
+            box-shadow: 0 0 14px rgba(0, 229, 160, .5);
+        }
+
+        .plug:active {
+            cursor: grabbing;
+        }
+
+        .plug-pin {
+            width: 5px;
+            height: 10px;
+            background: var(--green);
+            border-radius: 2px;
+        }
+
+        .plug-pin2 {
+            width: 3px;
+            height: 8px;
+            background: #4ae0c0;
+            border-radius: 2px;
+        }
+
+        /* ── State: connecting ── */
+        .scene.connecting .car-wrap {
+            transform: translateX(6px);
+        }
+
+        .scene.connecting .port {
+            border-color: var(--green);
+            box-shadow: 0 0 10px var(--green);
+        }
+
+        .scene.connecting .port::after {
+            background: var(--green);
+        }
+
+        /* ── State: connected ── */
+        .scene.connected .car-wrap {
+            filter: drop-shadow(0 0 12px rgba(0, 229, 160, .4));
+        }
+
+        .scene.connected .charger-box {
+            box-shadow: 0 0 20px rgba(0, 229, 160, .4);
+            border-color: var(--green);
+        }
+
+        .scene.connected .port {
+            border-color: var(--green);
+            box-shadow: 0 0 16px var(--green);
+        }
+
+        .scene.connected .port::after {
+            background: var(--green);
+        }
+
+        /* lightning bolt inside charger on connected */
+        .bolt {
+            font-size: 16px;
+            animation: boltPulse 0.7s infinite alternate;
+        }
+
+        @keyframes boltPulse {
+            from {
+                opacity: .5;
+                transform: scale(.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Energy flow dots on cable path */
+        .energy-dot {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            opacity: 0;
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        /* ── charging bar below car ── */
+        .charge-bar-wrap {
+            position: absolute;
+            left: 20px;
+            bottom: 0;
+            width: 134px;
+            height: 6px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 99px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity .4s;
+        }
+
+        .charge-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green2), var(--green));
+            border-radius: 99px;
+            transition: width .1s linear;
+        }
+
+        .scene.connected .charge-bar-wrap {
+            opacity: 1;
+        }
+
+        /* ── success: logged in ── */
+        .success-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 14, 26, .92);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .5s;
+            z-index: 20;
+        }
+
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-icon {
+            font-size: 52px;
+            animation: popIn .4s cubic-bezier(.17, .67, .44, 1.4) forwards;
+        }
+
+        .success-msg {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .success-sub {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ── connect button ── */
+        .connect-btn {
+            margin-top: 2px;
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--green2), var(--green));
+            border: none;
+            border-radius: 14px;
+            color: #0a0e1a;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            box-shadow: 0 6px 24px rgba(0, 229, 160, .25);
+        }
+
+        .connect-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+        .connect-btn:active {
+            transform: translateY(0);
+        }
+
+        .connect-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── input error state ── */
+        input.error {
+            border-color: #ff4466 !important;
+            box-shadow: 0 0 0 3px rgba(255, 68, 102, .15) !important;
+            animation: shake .35s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            20% {
+                transform: translateX(-6px)
+            }
+
+            40% {
+                transform: translateX(6px)
+            }
+
+            60% {
+                transform: translateX(-4px)
+            }
+
+            80% {
+                transform: translateX(4px)
+            }
+        }
+
+        /* ── error toast ── */
+        .toast {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: rgba(255, 68, 102, .12);
+            border: 1px solid rgba(255, 68, 102, .4);
+            color: #ff7a95;
+            font-size: 13px;
+            padding: 9px 18px;
+            border-radius: 99px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s, transform .25s;
+            z-index: 30;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── plug locked visual ── */
+        .plug.locked {
+            border-color: var(--muted);
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        .plug.locked:hover {
+            box-shadow: none;
+        }
+
+        /* footer */
+        .card-footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .card-footer a {
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        /* floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .p {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--green);
+            opacity: .06;
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: .06;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(1.4);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- background particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="card" style="position:relative;">
+
+        <!-- logo -->
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">EV<span>Charge</span></div>
+        </div>
+        <h2>Giriş Yap</h2>
+        <p class="subtitle">Şarj ağına hoş geldiniz</p>
+
+        <!-- form fields -->
+        <div class="field">
+            <label for="email">E-posta</label>
+            <input type="email" id="email" placeholder="ornek@email.com" />
+        </div>
+        <div class="field">
+            <label for="password">Şifre</label>
+            <input type="password" id="password" placeholder="••••••••" />
+        </div>
+
+        <div class="divider">veya kablo ile bağlan</div>
+
+        <!-- EV charging animation -->
+        <div class="charge-btn-area">
+            <p class="charge-hint" id="hint">⬇ Kabloyu araca takın ve giriş yapın</p>
+
+            <div class="scene" id="scene">
+
+                <!-- Car -->
+                <div class="car-wrap" id="car">
+                    <svg viewBox="0 0 130 60" xmlns="http://www.w3.org/2000/svg">
+                        <!-- body -->
+                        <rect x="5" y="28" width="110" height="24" rx="6" fill="#1c3055" />
+                        <!-- roof -->
+                        <path d="M28 28 Q36 10 72 10 Q96 10 105 28Z" fill="#1a2a4a" />
+                        <!-- windows -->
+                        <path d="M33 28 Q38 15 58 15 L58 28Z" fill="#0d3060" opacity=".9" />
+                        <path d="M60 28 L60 15 Q80 15 88 28Z" fill="#0d3060" opacity=".9" />
+                        <!-- wheels -->
+                        <circle cx="30" cy="52" r="8" fill="#101828" />
+                        <circle cx="30" cy="52" r="4" fill="#1c2d44" />
+                        <circle cx="98" cy="52" r="8" fill="#101828" />
+                        <circle cx="98" cy="52" r="4" fill="#1c2d44" />
+                        <!-- stripe -->
+                        <rect x="5" y="40" width="110" height="2" rx="1" fill="rgba(0,229,160,.18)" />
+                        <!-- headlights -->
+                        <rect x="108" y="34" width="6" height="4" rx="2" fill="#00e5a0" opacity=".7" />
+                        <!-- tail light -->
+                        <rect x="5" y="34" width="5" height="4" rx="2" fill="#ff4466" opacity=".7" />
+                    </svg>
+                    <!-- charging port hole on car right side -->
+                    <div class="port" id="port"></div>
+                </div>
+
+                <!-- Charger stand -->
+                <div class="charger-stand">
+                    <div class="charger-box" id="chargerBox">
+                        <div class="charger-screen" id="chargerScreen">🔌</div>
+                    </div>
+                    <div class="charger-pole"></div>
+                    <div class="charger-base"></div>
+                </div>
+
+                <!-- SVG cable path (drawn between charger and plug) -->
+                <svg class="cable-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"
+                    id="cableSvg">
+                    <defs>
+                        <marker id="cableEnd" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
+                            <circle cx="2" cy="2" r="2" fill="var(--green)" />
+                        </marker>
+                    </defs>
+                    <path id="cablePath" stroke="var(--green)" stroke-width="3" fill="none" stroke-linecap="round"
+                        opacity="0.5" d="" />
+                    <!-- energy flow dots -->
+                    <circle class="energy-dot" id="dot1" r="4" />
+                    <circle class="energy-dot" id="dot2" r="4" />
+                    <circle class="energy-dot" id="dot3" r="4" />
+                </svg>
+
+                <!-- Charge progress bar -->
+                <div class="charge-bar-wrap" id="barWrap">
+                    <div class="charge-bar-fill" id="barFill"></div>
+                </div>
+
+                <!-- Draggable plug -->
+                <div class="plug" id="plug" title="Sürükle veya tıkla">
+                    <div class="plug-pin"></div>
+                    <div class="plug-pin2"></div>
+                </div>
+            </div><!-- /scene -->
+
+            <!-- fallback button -->
+            <button class="connect-btn" id="connectBtn">⚡ Kabloyu Bağla & Giriş Yap</button>
+        </div>
+
+        <div class="card-footer">
+            Hesabın yok mu? <a href="#">Kayıt Ol</a>
+        </div>
+
+        <!-- Success overlay -->
+        <div class="success-overlay" id="successOverlay">
+            <div class="success-icon">✅</div>
+            <div class="success-msg">Bağlantı Kuruldu!</div>
+            <div class="success-sub">Hoş geldiniz, test kullanıcısı!</div>
+        </div>
+
+        <!-- Error toast -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // ── Floating background particles ──────────────────
+        (function () {
+            const wrap = document.getElementById('particles');
+            for (let i = 0; i < 22; i++) {
+                const p = document.createElement('div');
+                p.className = 'p';
+                const s = 4 + Math.random() * 12;
+                p.style.cssText = `
+      width:${s}px; height:${s}px;
+      left:${Math.random() * 100}vw;
+      bottom:${-20 + Math.random() * 20}px;
+      animation-duration:${8 + Math.random() * 14}s;
+      animation-delay:${-Math.random() * 20}s;
+    `;
+                wrap.appendChild(p);
+            }
+        })();
+
+        // ── References ─────────────────────────────────────
+        const scene = document.getElementById('scene');
+        const plug = document.getElementById('plug');
+        const connectBtn = document.getElementById('connectBtn');
+        const cablePath = document.getElementById('cablePath');
+        const cableSvg = document.getElementById('cableSvg');
+        const port = document.getElementById('port');
+        const chargerBox = document.getElementById('chargerBox');
+        const chargerScreen = document.getElementById('chargerScreen');
+        const barFill = document.getElementById('barFill');
+        const successOverlay = document.getElementById('successOverlay');
+        const hint = document.getElementById('hint');
+        const dot1 = document.getElementById('dot1');
+        const dot2 = document.getElementById('dot2');
+        const dot3 = document.getElementById('dot3');
+
+        // ── Demo kullanıcı (test için) ──────────────────────
+        const DEMO = { email: 'test@evcharge.com', password: 'Sarj2024' };
+
+        // ── References (extra) ─────────────────────────────
+        const emailInput = document.getElementById('email');
+        const passInput = document.getElementById('password');
+        const toast = document.getElementById('toast');
+
+        // ── State ──────────────────────────────────────────
+        let connected = false;
+        let charging = false;
+        let toastTimer = null;
+
+        // ── Mark plug as locked/unlocked based on fields ───
+        function updatePlugLock() {
+            const filled = emailInput.value.trim() && passInput.value.trim();
+            plug.classList.toggle('locked', !filled);
+        }
+        emailInput.addEventListener('input', updatePlugLock);
+        passInput.addEventListener('input', updatePlugLock);
+        updatePlugLock();
+
+        // ── Show a toast message ────────────────────────────
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        // ── Shake an input to indicate error ───────────────
+        function shakeInput(el) {
+            el.classList.remove('error');
+            void el.offsetWidth; // reflow to restart animation
+            el.classList.add('error');
+            setTimeout(() => el.classList.remove('error'), 500);
+        }
+
+        // ── Validate form before connecting ────────────────
+        function validate() {
+            const email = emailInput.value.trim();
+            const pass = passInput.value.trim();
+            if (!email && !pass) {
+                shakeInput(emailInput); shakeInput(passInput);
+                showToast('⚠️ E-posta ve şifre alanları boş olamaz!');
+                return false;
+            }
+            if (!email) {
+                shakeInput(emailInput);
+                showToast('⚠️ Lütfen e-posta adresinizi girin.');
+                return false;
+            }
+            if (!pass) {
+                shakeInput(passInput);
+                showToast('⚠️ Lütfen şifrenizi girin.');
+                return false;
+            }
+            if (email !== DEMO.email || pass !== DEMO.password) {
+                shakeInput(emailInput); shakeInput(passInput);
+                showToast('❌ E-posta veya şifre hatalı!');
+                return false;
+            }
+            return true;
+        }
+
+        // ── Helper: position of element center relative to scene ──
+        function relPos(el) {
+            const sr = scene.getBoundingClientRect();
+            const er = el.getBoundingClientRect();
+            return {
+                x: (er.left + er.width / 2) - sr.left,
+                y: (er.top + er.height / 2) - sr.top
+            };
+        }
+
+        // ── Draw cable between charger and plug ────────────
+        function drawCable() {
+            const chargerPos = {
+                x: relPos(chargerBox).x - 14,
+                y: relPos(chargerBox).y + 10
+            };
+            const plugPos = relPos(plug);
+            const mx = (chargerPos.x + plugPos.x) / 2;
+            const my = Math.max(chargerPos.y, plugPos.y) + 28;
+            cablePath.setAttribute('d',
+                `M ${chargerPos.x} ${chargerPos.y} Q ${mx} ${my}, ${plugPos.x} ${plugPos.y}`
+            );
+        }
+
+        // ── Animate energy dots along cable path ───────────
+        function animateDots() {
+            if (!connected) return;
+            const path = cablePath;
+            const len = path.getTotalLength();
+            const dots = [dot1, dot2, dot3];
+            dots.forEach((d, i) => {
+                d.style.opacity = '1';
+                let start = null;
+                const offset = i * (len / 3);
+                function step(ts) {
+                    if (!connected) { d.style.opacity = '0'; return; }
+                    if (!start) start = ts;
+                    const t = ((ts - start + offset * 5) % (len * 5)) / (len * 5);
+                    const pt = path.getPointAtLength(t * len);
+                    d.setAttribute('cx', pt.x);
+                    d.setAttribute('cy', pt.y);
+                    requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+            });
+        }
+
+        // ── Snap plug to port and begin charging ───────────
+        function connectPlug() {
+            if (!validate()) return;
+            if (connected) return;
+            connected = true;
+            charging = true;
+
+            // position plug at port location
+            const sceneRect = scene.getBoundingClientRect();
+            const portRect = port.getBoundingClientRect();
+            plug.style.transition = 'all .45s cubic-bezier(.4,0,.2,1)';
+            plug.style.right = 'unset';
+            plug.style.bottom = 'unset';
+            plug.style.left = (portRect.left - sceneRect.left - plug.offsetWidth / 2 + portRect.width / 2) + 'px';
+            plug.style.top = (portRect.top - sceneRect.top - plug.offsetHeight / 2 + portRect.height / 2) + 'px';
+
+            setTimeout(() => {
+                scene.classList.add('connecting');
+                setTimeout(() => {
+                    scene.classList.add('connected');
+                    chargerScreen.textContent = '⚡';
+                    hint.textContent = '⚡ Şarj ediliyor… Giriş yapılıyor';
+                    drawCable();
+                    animateDots();
+                    startCharging();
+                }, 500);
+            }, 450);
+        }
+
+        // ── Charging progress bar ──────────────────────────
+        function startCharging() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (!charging) { clearInterval(interval); return; }
+                progress += 2.2;
+                barFill.style.width = Math.min(progress, 100) + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(showSuccess, 300);
+                }
+            }, 60);
+        }
+
+        // ── Show success overlay ───────────────────────────
+        function showSuccess() {
+            successOverlay.classList.add('show');
+            setTimeout(() => {
+                // In a real app you'd navigate here
+                hint.textContent = '✅ Giriş başarılı!';
+            }, 600);
+        }
+
+        // ══════════════════════════════════════
+        //  DRAG behaviour on plug
+        // ══════════════════════════════════════
+        let dragging = false;
+        let dragOffX = 0, dragOffY = 0;
+
+        plug.addEventListener('mousedown', e => {
+            if (connected) return;
+            dragging = true;
+            plug.style.transition = 'none';
+            const pr = plug.getBoundingClientRect();
+            // switch to left/top positioning
+            const sr = scene.getBoundingClientRect();
+            plug.style.right = 'unset';
+            plug.style.bottom = 'unset';
+            plug.style.left = (pr.left - sr.left) + 'px';
+            plug.style.top = (pr.top - sr.top) + 'px';
+            dragOffX = e.clientX - pr.left;
+            dragOffY = e.clientY - pr.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            const sr = scene.getBoundingClientRect();
+            plug.style.left = (e.clientX - sr.left - dragOffX) + 'px';
+            plug.style.top = (e.clientY - sr.top - dragOffY) + 'px';
+            drawCable();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!dragging) return;
+            dragging = false;
+            // check proximity to port
+            const portRect = port.getBoundingClientRect();
+            const plugRect = plug.getBoundingClientRect();
+            const dx = Math.abs((plugRect.left + plugRect.width / 2) - (portRect.left + portRect.width / 2));
+            const dy = Math.abs((plugRect.top + plugRect.height / 2) - (portRect.top + portRect.height / 2));
+            if (dx < 38 && dy < 38) {
+                connectPlug();
+            }
+        });
+
+        // ── Touch support ──────────────────────────────────
+        plug.addEventListener('touchstart', e => {
+            if (connected) return;
+            dragging = true;
+            plug.style.transition = 'none';
+            const pr = plug.getBoundingClientRect();
+            const sr = scene.getBoundingClientRect();
+            plug.style.right = 'unset'; plug.style.bottom = 'unset';
+            plug.style.left = (pr.left - sr.left) + 'px';
+            plug.style.top = (pr.top - sr.top) + 'px';
+            const t = e.touches[0];
+            dragOffX = t.clientX - pr.left;
+            dragOffY = t.clientY - pr.top;
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', e => {
+            if (!dragging) return;
+            const sr = scene.getBoundingClientRect();
+            const t = e.touches[0];
+            plug.style.left = (t.clientX - sr.left - dragOffX) + 'px';
+            plug.style.top = (t.clientY - sr.top - dragOffY) + 'px';
+            drawCable();
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (!dragging) return;
+            dragging = false;
+            const portRect = port.getBoundingClientRect();
+            const plugRect = plug.getBoundingClientRect();
+            const dx = Math.abs((plugRect.left + plugRect.width / 2) - (portRect.left + portRect.width / 2));
+            const dy = Math.abs((plugRect.top + plugRect.height / 2) - (portRect.top + portRect.height / 2));
+            if (dx < 38 && dy < 38) connectPlug();
+        });
+
+        // ── Button fallback click ──────────────────────────
+        connectBtn.addEventListener('click', () => {
+            if (connected) return;
+            // validate önce; başarısız olursa buton açık kalır
+            if (!validate()) return;
+            connectBtn.disabled = true;
+            connectPlug();
+        });
+
+        // ── Click on plug (instant connect) ───────────────
+        plug.addEventListener('click', e => {
+            if (connected || dragging) return;
+            connectPlug();
+        });
+
+        // ── Initial cable draw ─────────────────────────────
+        window.addEventListener('load', () => { drawCable(); });
+        window.addEventListener('resize', () => { if (!connected) drawCable(); });
+    </script>
+
+</body>
+
+</html>
