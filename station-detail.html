@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — İstasyon Detay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+        .station-hero {
+            background: linear-gradient(135deg, rgba(0,229,160,.08), rgba(0,168,232,.06));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .station-hero::before {
+            content: '';
+            position: absolute;
+            top: -50px; right: -50px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(0,229,160,.08), transparent 70%);
+            pointer-events: none;
+        }
+        .station-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+        .station-hero .station-address { color: var(--muted); font-size: 15px; margin-bottom: 12px; }
+        .station-hero .station-meta { display: flex; gap: 20px; flex-wrap: wrap; }
+        .station-hero .meta-item {
+            font-size: 14px; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .hero-actions { display: flex; gap: 12px; margin-top: 20px; }
+
+        /* Charger grid */
+        .charger-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .charger-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: border-color .2s;
+        }
+        .charger-card:hover { border-color: rgba(0,229,160,.3); }
+        .charger-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .charger-name { font-size: 16px; font-weight: 600; }
+        .charger-specs { display: flex; flex-direction: column; gap: 6px; }
+        .charger-spec {
+            font-size: 13px; color: var(--muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .charger-spec strong { color: var(--text); }
+
+        /* Compatibility */
+        .compat-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .compat-ok {
+            background: rgba(0,229,160,.08); border: 1px solid rgba(0,229,160,.25);
+            color: var(--green); padding: 8px 14px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+        }
+        .compat-no {
+            background: rgba(255,68,102,.08); border: 1px solid rgba(255,68,102,.25);
+            color: var(--danger); padding: 8px 14px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+        }
+        .compat-none {
+            background: rgba(122,138,171,.08); border: 1px solid rgba(122,138,171,.2);
+            color: var(--muted); padding: 8px 14px; border-radius: 10px;
+            font-size: 13px;
+        }
+        .charger-actions { margin-top: 14px; }
+    </style>
+</head>
+<body>
+    <header class="navbar" id="navbar"></header>
+
+    <div class="container">
+        <!-- İstasyon Bilgi Kartı -->
+        <div class="station-hero" id="stationHero">
+            <p style="color:var(--muted);">İstasyon yükleniyor...</p>
+        </div>
+
+        <!-- Şarj Üniteleri -->
+        <div class="card">
+            <div class="card-header">
+                <h2>⚡ Şarj Üniteleri</h2>
+                <div>
+                    <label style="font-size:13px;color:var(--muted);margin-right:8px;">Aracım:</label>
+                    <select class="form-control" id="vehicleSelect" style="display:inline-block;width:auto;min-width:180px;" onchange="renderChargers()">
+                        <option value="">Araç seçin (uyumluluk kontrolü)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="charger-grid" id="chargerGrid">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/reservation.js"></script>
+    <script>
+        // ── URL'den istasyon ID'si al ──
+        const params = new URLSearchParams(window.location.search);
+        const stationId = params.get('id');
+        let station = null;
+        let vehicles = [];
+
+        // ── Sayfayı yükle ──
+        async function loadPage() {
+            const user = await App.requireAuth();
+            if (!user) return;
+            App.renderNavbar('map');
+
+            try {
+                station = await API.getStation(stationId);
+            } catch(e) {
+                station = null;
+            }
+
+            if (!station) {
+                document.getElementById('stationHero').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <p>İstasyon bulunamadı.</p>
+                        <a href="map.html" class="btn btn-primary btn-sm">Haritaya Dön</a>
+                    </div>
+                `;
+                return;
+            }
+
+            renderStationHero();
+            await loadVehicleSelect();
+            renderChargers();
+        }
+
+        // ── İstasyon hero kartı (EV-08) ──
+        function renderStationHero() {
+            const chargers = station.chargers || [];
+            const available = chargers.filter(c => c.status === 'available').length;
+            const types = [...new Set(chargers.map(c => c.connector_type))].join(', ');
+
+            document.getElementById('stationHero').innerHTML = `
+                <h1>📍 ${station.name}</h1>
+                <div class="station-address">${station.address}</div>
+                <div class="station-meta">
+                    <div class="meta-item">🕐 ${station.operating_hours}</div>
+                    <div class="meta-item">⚡ ${available}/${chargers.length} müsait</div>
+                    <div class="meta-item">🔌 ${types}</div>
+                </div>
+                <div class="hero-actions">
+                    <a href="reservation.html?station=${station.id}" class="btn btn-primary">📅 Rezervasyon Yap</a>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}"
+                       target="_blank" class="btn btn-secondary">🧭 Yol Tarifi</a>
+                    <a href="map.html" class="btn btn-secondary">← Haritaya Dön</a>
+                </div>
+            `;
+        }
+
+        // ── Araç seçimi dropdown'ı ──
+        async function loadVehicleSelect() {
+            try {
+                vehicles = await API.getVehicles();
+            } catch(e) { vehicles = []; }
+            const select = document.getElementById('vehicleSelect');
+
+            vehicles.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = `${v.brand} ${v.model} (${v.connector_type})`;
+                select.appendChild(opt);
+            });
+        }
+
+        // ── Şarj ünitelerini göster + uyumluluk kontrolü (EV-13) ──
+        function renderChargers() {
+            const chargers = station.chargers || [];
+            const selectedVehicleId = document.getElementById('vehicleSelect').value;
+            const selectedVehicle = vehicles.find(v => String(v.id) === selectedVehicleId);
+
+            const container = document.getElementById('chargerGrid');
+
+            container.innerHTML = chargers.map(charger => {
+                const statusMap = {
+                    available: { text: 'Müsait', cls: 'badge-available' },
+                    occupied: { text: 'Dolu', cls: 'badge-occupied' },
+                    offline: { text: 'Çevrimdışı', cls: 'badge-offline' },
+                };
+                const status = statusMap[charger.status] || statusMap.offline;
+
+                let compatHTML = '';
+                if (selectedVehicle) {
+                    const isCompatible = Reservation.checkCompatibility(selectedVehicle, charger);
+                    if (isCompatible) {
+                        compatHTML = `<div class="compat-ok">✅ ${selectedVehicle.brand} ${selectedVehicle.model} ile uyumlu</div>`;
+                    } else {
+                        compatHTML = `<div class="compat-no">❌ Uyumsuz — Araç: ${selectedVehicle.connector_type}, Şarj: ${charger.connector_type}</div>`;
+                    }
+                } else {
+                    compatHTML = `<div class="compat-none">ℹ️ Uyumluluk kontrolü için araç seçin</div>`;
+                }
+
+                const canReserve = charger.status === 'available' &&
+                    (!selectedVehicle || Reservation.checkCompatibility(selectedVehicle, charger));
+                const pricePerKwh = charger.price_per_kwh || 0;
+
+                return `
+                    <div class="charger-card">
+                        <div class="charger-header">
+                            <div class="charger-name">${charger.type} ${charger.power}kW #${String(charger.id).slice(-2)}</div>
+                            <span class="badge ${status.cls}">${status.text}</span>
+                        </div>
+                        <div class="charger-specs">
+                            <div class="charger-spec">🔌 Konnektör: <strong>${charger.connector_type}</strong></div>
+                            <div class="charger-spec">⚡ Güç: <strong>${charger.power} kW</strong></div>
+                            <div class="charger-spec">💰 Fiyat: <strong>${Number(pricePerKwh).toFixed(2)} ₺/kWh</strong></div>
+                            <div class="charger-spec">📊 Tip: <strong>${charger.type}</strong></div>
+                        </div>
+                        <div class="compat-section">${compatHTML}</div>
+                        <div class="charger-actions">
+                            ${canReserve
+                                ? `<a href="reservation.html?station=${station.id}&charger=${charger.id}${selectedVehicle ? '&vehicle=' + selectedVehicle.id : ''}" class="btn btn-primary btn-sm" style="width:100%;">📅 Bu Üniteyi Rezerve Et</a>`
+                                : `<button class="btn btn-secondary btn-sm" style="width:100%;" disabled>${charger.status === 'available' ? 'Uyumsuz' : status.text}</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadPage();
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+        /* ── Dashboard-specific styles ── */
+        .welcome-banner {
+            background: linear-gradient(135deg, rgba(0,229,160,.08) 0%, rgba(0,168,232,.06) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(0,229,160,.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .welcome-banner h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+        .welcome-banner h1 span { color: var(--green); }
+        .welcome-banner p { color: var(--muted); font-size: 15px; }
+
+        /* Quick actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .action-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform .2s, border-color .2s, box-shadow .2s;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .action-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--green);
+            box-shadow: 0 8px 30px rgba(0,229,160,.12);
+            opacity: 1;
+        }
+        .action-card .action-icon { font-size: 32px; margin-bottom: 10px; }
+        .action-card .action-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .action-card .action-desc { font-size: 13px; color: var(--muted); }
+
+        /* Reservations section */
+        .reservation-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .res-info { flex: 1; }
+        .res-station { font-size: 15px; font-weight: 600; }
+        .res-time { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar" id="navbar"></header>
+
+    <div class="container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <h1>Hoş geldin, <span id="userName">Kullanıcı</span> 👋</h1>
+            <p>Elektrikli aracını şarj etmeye hazır mısın?</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="map.html" class="action-card">
+                <div class="action-icon">🗺️</div>
+                <div class="action-title">İstasyon Bul</div>
+                <div class="action-desc">Haritada yakın istasyonları keşfet</div>
+            </a>
+            <a href="map.html?action=reserve" class="action-card">
+                <div class="action-icon">📅</div>
+                <div class="action-title">Rezervasyon Yap</div>
+                <div class="action-desc">Haritadan istasyon seçip ayırt</div>
+            </a>
+            <a href="charging.html" class="action-card">
+                <div class="action-icon">⚡</div>
+                <div class="action-title">Şarj Başlat</div>
+                <div class="action-desc">Aktif rezervasyondan şarj et</div>
+            </a>
+        </div>
+
+        <!-- Aktif Rezervasyonlar -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+                <h2>📅 Aktif Rezervasyonlar</h2>
+            </div>
+            <div id="reservationList">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Onay Modalı (İptal/Silme işlemleri için) -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal" style="width: min(400px, 90vw); text-align: center;">
+            <h3 style="margin-bottom: 10px;">⚠️ Emin misiniz?</h3>
+            <p id="confirmModalText" style="color: var(--muted); margin-bottom: 24px;">Bu işlemi gerçekleştirmek istediğinize emin misiniz?</p>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Vazgeç</button>
+                <button class="btn btn-danger" id="confirmModalBtn">Evet, Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // ── Oturum kontrolü (async) ──
+        (async function init() {
+            const user = await App.requireAuth();
+            if (!user) return;
+
+            App.renderNavbar('dashboard');
+            document.getElementById('userName').textContent = user.name || 'Kullanıcı';
+
+            renderReservations();
+        })();
+
+        // ── In-App Confirm Modal Logic ──
+        let confirmActionCb = null;
+
+        function openConfirmModal(message, actionCallback) {
+            document.getElementById('confirmModalText').textContent = message;
+            confirmActionCb = actionCallback;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirmModal() {
+            confirmActionCb = null;
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+
+        document.getElementById('confirmModalBtn').addEventListener('click', async () => {
+            if (confirmActionCb) {
+                const cb = confirmActionCb;
+                closeConfirmModal();
+                await cb();
+            }
+        });
+
+        // ══════════════════════════════════════
+        //  AKTİF REZERVASYONLAR
+        // ══════════════════════════════════════
+
+        async function renderReservations() {
+            try {
+                const reservations = await API.getReservations();
+                const active = reservations.filter(r => r.status === 'active');
+                const container = document.getElementById('reservationList');
+
+                if (active.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📅</div>
+                            <p>Aktif rezervasyonunuz bulunmuyor.</p>
+                            <a href="map.html" class="btn btn-primary btn-sm">İstasyon Bul</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = active.map(r => `
+                    <div class="reservation-item">
+                        <div class="res-info">
+                            <div class="res-station">📍 ${r.station_name || 'İstasyon'}</div>
+                            <div class="res-time">${r.date} • ${r.start_slot} - ${r.end_slot}</div>
+                        </div>
+                        <div class="res-actions" style="display:flex; gap:8px;">
+                            <a href="charging.html?rid=${r.id}" class="btn btn-primary btn-sm">⚡ Şarj Başlat</a>
+                            <button class="btn btn-danger btn-sm" onclick="cancelReservation(${r.id}, '${r.date}', '${r.start_slot}')">❌ İptal</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                App.showToast('Rezervasyonlar yüklenemedi.', 'error');
+            }
+        }
+
+        function cancelReservation(resId, date, startSlot) {
+            const now = new Date();
+            const resStart = new Date(`${date}T${startSlot}:00`);
+            const diffMins = (resStart - now) / (1000 * 60);
+
+            let message = 'Bu rezervasyonu iptal etmek istediğinize emin misiniz? (Şarja 1 saatten fazla olduğu için paranızın tamamı iade edilecektir.)';
+            
+            if (diffMins < 0) {
+                message = "Bu rezervasyonun başlangıç saati geçmiş. İade yapılmayacaktır. Yine de iptal edilsin mi?";
+            } else if (diffMins < 60) {
+                message = "⚠️ DİKKAT: Şarja 1 saatten az kaldığı için iptal ederseniz paranızın sadece %50'si iade edilecektir. Onaylıyor musunuz?";
+            }
+
+            openConfirmModal(message, async () => {
+                try {
+                    const res = await API.cancelReservation(resId);
+                    renderReservations();
+                    App.showToast('✅ ' + (res.message || 'Rezervasyon iptal edildi.'));
+                } catch (err) {
+                    App.showToast('Hata: ' + err.message, 'error');
+                }
+            });
+        }
+
+        // ── Modal dışına tıklayınca kapat ──
+        document.getElementById('confirmModal').addEventListener('click', function(e) {
+            if (e.target === this) closeConfirmModal();
+        });
+    </script>
+</body>
+</html>

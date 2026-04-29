@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — Harita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+        .map-layout {
+            display: flex;
+            height: calc(100vh - 64px);
+            overflow: hidden;
+        }
+
+        /* ── Filter Sidebar ── */
+        .map-sidebar {
+            width: 320px;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .map-sidebar h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-section label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--dark);
+            flex-shrink: 0;
+        }
+
+        /* Station list in sidebar */
+        .station-list {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .station-list h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--muted);
+        }
+
+        .station-list-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: border-color .2s;
+        }
+
+        .station-list-item:hover {
+            border-color: var(--green);
+        }
+
+        .sli-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .sli-info {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .sli-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        /* ── Map Container ── */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* ── Mobile toggle ── */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 10;
+            width: 48px;
+            height: 48px;
+            background: var(--green);
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 229, 160, .3);
+        }
+
+        @media (max-width: 768px) {
+            .map-sidebar {
+                position: fixed;
+                left: -320px;
+                top: 64px;
+                height: calc(100vh - 64px);
+                transition: left .3s ease;
+                z-index: 50;
+            }
+
+            .map-sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <header class="navbar" id="navbar"></header>
+
+    <div class="map-layout">
+        <!-- Sidebar: Filtreler + İstasyon listesi -->
+        <aside class="map-sidebar" id="sidebar">
+            <h2>🗺️ İstasyon Filtrele</h2>
+
+            <!-- Durum filtresi -->
+            <div class="filter-section">
+                <label for="filterStatus">Durum</label>
+                <select class="form-control" id="filterStatus">
+                    <option value="all">Tümü</option>
+                    <option value="available">Müsait</option>
+                    <option value="occupied">Dolu</option>
+                    <option value="offline">Çevrimdışı</option>
+                </select>
+            </div>
+
+            <!-- Konnektör tipi filtresi -->
+            <div class="filter-section">
+                <label for="filterConnector">Konnektör Tipi</label>
+                <select class="form-control" id="filterConnector">
+                    <option value="">Tümü</option>
+                    <option value="Type 2">Type 2</option>
+                    <option value="CCS">CCS</option>
+                    <option value="CHAdeMO">CHAdeMO</option>
+                </select>
+            </div>
+
+            <!-- Güç filtresi -->
+            <div class="filter-section">
+                <label for="filterPower">Minimum Güç (kW)</label>
+                <select class="form-control" id="filterPower">
+                    <option value="">Tümü</option>
+                    <option value="22">22 kW+</option>
+                    <option value="50">50 kW+</option>
+                    <option value="150">150 kW+</option>
+                </select>
+            </div>
+
+            <!-- Fiyat filtresi -->
+            <div class="filter-section">
+                <label for="filterPrice">Maks. Fiyat (₺/kWh)</label>
+                <select class="form-control" id="filterPrice">
+                    <option value="">Tümü</option>
+                    <option value="3.5">≤ 3.50 ₺</option>
+                    <option value="4.0">≤ 4.00 ₺</option>
+                    <option value="5.0">≤ 5.00 ₺</option>
+                    <option value="6.0">≤ 6.00 ₺</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;" onclick="applyFilters()">Filtrele</button>
+            <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
+                onclick="clearFilters()">Temizle</button>
+
+            <!-- Renk Açıklaması -->
+            <div class="legend">
+                <h3>Renk Kodları</h3>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#00e5a0;"></div>
+                    Müsait — şarj ünitesi boş
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ffd700;"></div>
+                    Dolu — tüm üniteler kullanımda
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff4466;"></div>
+                    Çevrimdışı — bakımda/arızalı
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#4285F4;"></div>
+                    Sizin konumunuz
+                </div>
+            </div>
+
+            <!-- İstasyon Listesi -->
+            <div class="station-list" id="stationList">
+                <h3>İstasyonlar</h3>
+                <!-- JS ile doldurulacak -->
+            </div>
+        </aside>
+
+        <!-- Google Maps -->
+        <div id="map"></div>
+    </div>
+
+    <!-- Mobil sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">🔍</button>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/map.js"></script>
+
+    <script>
+        let allStations = [];
+
+        // ── Google Maps callback ──
+        function initMap() {
+            MapModule.init('map');
+            loadAndDisplayStations();
+        }
+
+        // ── İstasyonları API'den yükle ──
+        async function loadAndDisplayStations() {
+            try {
+                allStations = await API.getStations();
+                MapModule.displayStations(allStations);
+                renderStationList(allStations);
+            } catch (err) {
+                App.showToast('İstasyonlar yüklenemedi: ' + err.message, 'error');
+            }
+        }
+
+        // ── Sidebar'daki istasyon listesi ──
+        function renderStationList(stations) {
+            const container = document.getElementById('stationList');
+            const statusColors = {
+                available: '#00e5a0',
+                occupied: '#ffd700',
+                offline: '#ff4466',
+            };
+
+            let html = '<h3>İstasyonlar (' + stations.length + ')</h3>';
+
+            stations.forEach(station => {
+                const status = MapModule.getStationOverallStatus(station);
+                const chargers = station.chargers || [];
+                const available = chargers.filter(c => c.status === 'available').length;
+
+                html += `
+                    <div class="station-list-item" onclick="focusStation(${station.id})">
+                        <div class="sli-name">
+                            <span class="sli-status" style="background:${statusColors[status]}"></span>
+                            ${station.name}
+                        </div>
+                        <div class="sli-info">
+                            ${station.address} • ⚡ ${available}/${chargers.length} müsait
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ── İstasyona odaklan ──
+        function focusStation(stationId) {
+            const marker = MapModule.markers.find(m => m.stationData.id === stationId || m.stationData.id === String(stationId));
+            if (marker) {
+                MapModule.map.setCenter(marker.getPosition());
+                MapModule.map.setZoom(15);
+                google.maps.event.trigger(marker, 'click');
+            }
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        // ── Filtreleri uygula ──
+        function applyFilters() {
+            const filters = {
+                statusFilter: document.getElementById('filterStatus').value,
+                connectorType: document.getElementById('filterConnector').value,
+                minPower: document.getElementById('filterPower').value,
+                maxPrice: document.getElementById('filterPrice').value,
+            };
+            MapModule.filterStations(filters);
+
+            // Sidebar listesini de filtrele
+            const filtered = allStations.filter(station => {
+                const chargers = station.chargers || [];
+                let visible = true;
+
+                if (filters.connectorType) {
+                    visible = chargers.some(c => c.connectorType === filters.connectorType);
+                }
+                if (visible && filters.minPower) {
+                    visible = chargers.some(c => c.power >= Number(filters.minPower));
+                }
+                if (visible && filters.maxPrice) {
+                    visible = chargers.some(c => c.pricePerKwh <= Number(filters.maxPrice));
+                }
+                if (visible && filters.statusFilter && filters.statusFilter !== 'all') {
+                    visible = MapModule.getStationOverallStatus(station) === filters.statusFilter;
+                }
+                return visible;
+            });
+            renderStationList(filtered);
+        }
+
+        // ── Filtreleri temizle ──
+        function clearFilters() {
+            document.getElementById('filterStatus').value = 'all';
+            document.getElementById('filterConnector').value = '';
+            document.getElementById('filterPower').value = '';
+            document.getElementById('filterPrice').value = '';
+            MapModule.markers.forEach(m => m.setVisible(true));
+            renderStationList(allStations);
+        }
+
+        // ── Mobil sidebar toggle ──
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // ── Sayfa başlatıcı ──
+        (async function() {
+            const user = await App.requireAuth();
+            if (!user) return;
+            App.renderNavbar('map');
+
+            // URL'de action=reserve varsa bilgi ver
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'reserve') {
+                setTimeout(() => {
+                    App.showToast('ℹ️ Lütfen haritadan rezervasyon yapmak istediğiniz istasyonu seçin.');
+                }, 500);
+            }
+
+            // Google Maps API key'i backend'den al ve haritayı yükle
+            try {
+                const mapsKey = await API.getMapsKey();
+                const script = document.createElement('script');
+                script.src = 'https://maps.googleapis.com/maps/api/js?key=' + mapsKey + '&callback=initMap';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } catch (err) {
+                App.showToast('Harita yüklenemedi: ' + err.message, 'error');
+            }
+        })();
+    </script>
+</body>
+
+</html>

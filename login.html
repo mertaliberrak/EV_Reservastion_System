@@ -715,7 +715,7 @@
         </div>
 
         <div class="card-footer">
-            Hesabın yok mu? <a href="#">Kayıt Ol</a>
+            Hesabın yok mu? <a href="register.html">Kayıt Ol</a>
         </div>
 
         <!-- Success overlay -->
@@ -729,6 +729,8 @@
         <div class="toast" id="toast"></div>
     </div>
 
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         // ── Floating background particles ──────────────────
         (function () {
@@ -764,8 +766,10 @@
         const dot2 = document.getElementById('dot2');
         const dot3 = document.getElementById('dot3');
 
-        // ── Demo kullanıcı (test için) ──────────────────────
-        const DEMO = { email: 'test@evcharge.com', password: 'Sarj2024' };
+        // ── Zaten giriş yapılmışsa dashboard'a yönlendir ────
+        if (Auth.isLoggedIn()) {
+            window.location.href = 'dashboard.html';
+        }
 
         // ── References (extra) ─────────────────────────────
         const emailInput = document.getElementById('email');
@@ -803,7 +807,7 @@
         }
 
         // ── Validate form before connecting ────────────────
-        function validate() {
+        async function validate() {
             const email = emailInput.value.trim();
             const pass = passInput.value.trim();
             if (!email && !pass) {
@@ -821,9 +825,11 @@
                 showToast('⚠️ Lütfen şifrenizi girin.');
                 return false;
             }
-            if (email !== DEMO.email || pass !== DEMO.password) {
+            // API üzerinden kullanıcı doğrulama
+            const result = await Auth.login(email, pass);
+            if (!result.success) {
                 shakeInput(emailInput); shakeInput(passInput);
-                showToast('❌ E-posta veya şifre hatalı!');
+                showToast('❌ ' + result.message);
                 return false;
             }
             return true;
@@ -877,8 +883,8 @@
         }
 
         // ── Snap plug to port and begin charging ───────────
-        function connectPlug() {
-            if (!validate()) return;
+        async function connectPlug() {
+            if (!(await validate())) return;
             if (connected) return;
             connected = true;
             charging = true;
@@ -919,12 +925,21 @@
             }, 60);
         }
 
-        // ── Show success overlay ───────────────────────────
-        function showSuccess() {
+        // ── Show success overlay & redirect ─────────────────
+        async function showSuccess() {
+            let userName = 'Kullanıcı';
+            try {
+                const data = await API.getMe();
+                if (data && data.user) userName = data.user.name;
+            } catch(e) {}
+            document.querySelector('.success-sub').textContent = 'Hoş geldiniz, ' + userName + '!';
             successOverlay.classList.add('show');
             setTimeout(() => {
-                // In a real app you'd navigate here
                 hint.textContent = '✅ Giriş başarılı!';
+                // Dashboard'a yönlendir
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 800);
             }, 600);
         }
 

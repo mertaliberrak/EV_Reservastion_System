@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — Profilim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Profil Sol Menü (Tabs) */
+        .profile-nav {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: sticky;
+            top: 100px;
+        }
+
+        .profile-nav button {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-nav button:hover {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+        }
+
+        .profile-nav button.active {
+            background: rgba(0,229,160,.1);
+            color: var(--green);
+        }
+
+        /* Tab İçerikleri */
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .profile-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Kredi Kartları */
+        .credit-card-item {
+            background: linear-gradient(135deg, rgba(0,229,160,.1) 0%, rgba(0,168,232,.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color .2s;
+        }
+        .credit-card-item:hover {
+            border-color: var(--green);
+        }
+        .cc-info { display: flex; align-items: center; gap: 16px; }
+        .cc-icon {
+            font-size: 32px;
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .cc-details { display: flex; flex-direction: column; gap: 4px; }
+        .cc-name { font-weight: 600; font-size: 15px; }
+        .cc-number { font-size: 16px; font-family: monospace; letter-spacing: 2px; }
+        .cc-expiry { font-size: 12px; color: var(--muted); }
+
+        .empty-state-box {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--card2);
+            border-radius: var(--radius);
+            border: 1px dashed var(--border);
+            color: var(--muted);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Araçlar Listesi */
+        .vehicle-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            transition: border-color .2s;
+        }
+        .vehicle-item:hover { border-color: rgba(0,229,160,.35); }
+        .vehicle-info { display: flex; align-items: center; gap: 14px; }
+        .vehicle-icon {
+            width: 48px; height: 48px;
+            background: rgba(0,229,160,.08);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+        .vehicle-name { font-size: 15px; font-weight: 600; }
+        .vehicle-details { font-size: 13px; color: var(--muted); margin-top: 4px; display:flex; flex-wrap:wrap; gap:12px; }
+    </style>
+</head>
+<body>
+    <header class="navbar" id="navbar"></header>
+
+    <div class="container">
+        <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+            <div>
+                <h1>👤 Profilim</h1>
+                <p style="color:var(--muted);">Hesap ayarlarınızı, araçlarınızı ve ödeme yöntemlerinizi yönetin.</p>
+            </div>
+            <div style="text-align: right; display:none;" id="joinDateContainer">
+                <div style="font-size: 13px; color: var(--muted);">Üyelik Tarihi</div>
+                <div id="joinDate" style="font-weight: 600;">-</div>
+            </div>
+        </div>
+
+        <div class="profile-container">
+            <!-- Sol Menü -->
+            <nav class="profile-nav">
+                <button class="active" onclick="switchTab('info')"><span>👤</span> Bilgilerim</button>
+                <button onclick="switchTab('password')"><span>🔐</span> Şifre Değiştir</button>
+                <button onclick="switchTab('vehicles')"><span>🚗</span> Araçlarım</button>
+                <button onclick="switchTab('cards')"><span>💳</span> Kartlarım</button>
+            </nav>
+
+            <!-- İçerik Alanı -->
+            <div class="profile-content">
+                
+                <!-- SEKME 1: BİLGİLERİM -->
+                <div id="tab-info" class="tab-pane active card">
+                    <div class="card-header">
+                        <h2>Kişisel Bilgiler</h2>
+                    </div>
+                    <form id="profileForm" class="profile-form" onsubmit="handleUpdateProfile(event)">
+                        <div class="form-group">
+                            <label for="pName">Ad Soyad</label>
+                            <input type="text" id="pName" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="pEmail">E-posta (Değiştirilemez)</label>
+                            <input type="email" id="pEmail" class="form-control" disabled style="opacity: 0.6; cursor: not-allowed;" />
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="updateProfileBtn">Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- SEKME 2: ŞİFRE DEĞİŞTİR -->
+                <div id="tab-password" class="tab-pane card">
+                    <div class="card-header">
+                        <h2>Şifre Değiştir</h2>
+                    </div>
+                    <p style="color:var(--muted); font-size:14px; margin-bottom:20px;">Güvenliğiniz için yeni şifre belirlerken mevcut şifrenizi girmeniz gerekmektedir.</p>
+                    <form id="passwordForm" class="profile-form" onsubmit="handleChangePassword(event)">
+                        <div class="form-group">
+                            <label for="pOldPassword">Mevcut Şifre</label>
+                            <input type="password" id="pOldPassword" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="pNewPassword">Yeni Şifre</label>
+                            <input type="password" id="pNewPassword" class="form-control" required placeholder="En az 6 karakter" minlength="6" />
+                        </div>
+                        <div class="form-group">
+                            <label for="pConfirmPassword">Yeni Şifre (Tekrar)</label>
+                            <input type="password" id="pConfirmPassword" class="form-control" required minlength="6" />
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="updatePasswordBtn">Şifreyi Güncelle</button>
+                    </form>
+                </div>
+
+                <!-- SEKME 3: ARAÇLARIM -->
+                <div id="tab-vehicles" class="tab-pane card">
+                    <div class="card-header">
+                        <h2>Araçlarım</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openAddVehicleModal()">+ Araç Ekle</button>
+                    </div>
+                    <div id="vehicleList">
+                        <!-- JS ile yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- SEKME 4: KARTLARIM -->
+                <div id="tab-cards" class="tab-pane card">
+                    <div class="card-header">
+                        <h2>Kayıtlı Kartlarım</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openAddCardModal()">+ Yeni Kart Ekle</button>
+                    </div>
+                    <div id="cardsList">
+                        <!-- JS ile yüklenecek -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modallar -->
+    
+    <!-- Yeni Kart Ekleme Modalı -->
+    <div class="modal-overlay" id="addCardModal">
+        <div class="modal">
+            <h3>💳 Yeni Kredi Kartı Ekle</h3>
+            <form id="addCardForm" onsubmit="handleAddCard(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="cName">Kart Üzerindeki İsim</label>
+                    <input type="text" class="form-control" id="cName" required placeholder="Ad Soyad" />
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="cNumber">Kart Numarası</label>
+                    <input type="text" class="form-control" id="cNumber" required placeholder="XXXX XXXX XXXX XXXX" maxlength="19" oninput="formatCardNumber(this)" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cExpiry">Son Kullanma (AA/YY)</label>
+                        <input type="text" class="form-control" id="cExpiry" required placeholder="12/25" maxlength="5" oninput="formatExpiry(this)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="cCVV">CVV</label>
+                        <input type="text" class="form-control" id="cCVV" required placeholder="123" maxlength="3" />
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; font-size: 12px; color: var(--muted); display:flex; align-items:center; gap:8px;">
+                    <span style="font-size: 16px;">🔒</span> 
+                    Güvenliğiniz için kart numaralarınız maskelenerek (sadece son 4 hane) kaydedilmektedir.
+                </div>
+
+                <div class="modal-actions" style="margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCardModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary" id="addCardBtn">Kartı Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Araç Ekleme Modalı -->
+    <div class="modal-overlay" id="addVehicleModal">
+        <div class="modal">
+            <h3>🚗 Yeni Araç Ekle</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="vBrand">Marka</label>
+                    <input type="text" class="form-control" id="vBrand" placeholder="örn. Tesla" />
+                </div>
+                <div class="form-group">
+                    <label for="vModel">Model</label>
+                    <input type="text" class="form-control" id="vModel" placeholder="örn. Model 3" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="vBattery">Batarya Kapasitesi (kWh)</label>
+                    <input type="number" class="form-control" id="vBattery" placeholder="örn. 75" />
+                </div>
+                <div class="form-group">
+                    <label for="vConnector">Konnektör Tipi</label>
+                    <select class="form-control" id="vConnector">
+                        <option value="">Seçiniz</option>
+                        <option value="Type 2">Type 2</option>
+                        <option value="CCS">CCS</option>
+                        <option value="CHAdeMO">CHAdeMO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="vMaxCharge">Maks. Şarj Hızı (kW)</label>
+                    <input type="number" class="form-control" id="vMaxCharge" placeholder="örn. 150" />
+                </div>
+                <div class="form-group">
+                    <label for="vPlate">Plaka</label>
+                    <input type="text" class="form-control" id="vPlate" placeholder="örn. 35 EV 2024" />
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
+                <button class="btn btn-secondary" onclick="closeAddVehicleModal()">İptal</button>
+                <button class="btn btn-primary" onclick="addVehicle()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onay Modalı -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal" style="width: min(400px, 90vw); text-align: center;">
+            <h3 style="margin-bottom: 10px;">⚠️ Emin misiniz?</h3>
+            <p id="confirmModalText" style="color: var(--muted); margin-bottom: 24px;">Bu işlemi gerçekleştirmek istediğinize emin misiniz?</p>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Vazgeç</button>
+                <button class="btn btn-danger" id="confirmModalBtn">Evet, Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        (async function init() {
+            const user = await App.requireAuth();
+            if (!user) return;
+            App.renderNavbar('profile');
+            
+            await loadProfileData();
+            await loadCards();
+            await loadVehicles();
+        })();
+
+        // ── Tab Değiştirme Mantığı ──
+        function switchTab(tabId) {
+            document.querySelectorAll('.profile-nav button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // ── Profil Bilgileri Yükleme ──
+        async function loadProfileData() {
+            try {
+                const profile = await API.getProfile();
+                document.getElementById('pName').value = profile.name;
+                document.getElementById('pEmail').value = profile.email;
+                document.getElementById('joinDate').textContent = App.formatDate(profile.created_at);
+                document.getElementById('joinDateContainer').style.display = 'block';
+            } catch (err) {
+                App.showToast('Profil bilgileri alınamadı.', 'error');
+            }
+        }
+
+        // ── Bilgilerimi (İsim) Güncelleme ──
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const btn = document.getElementById('updateProfileBtn');
+            const name = document.getElementById('pName').value;
+
+            btn.disabled = true;
+            btn.textContent = 'Kaydediliyor...';
+
+            try {
+                const res = await API.updateProfile(name, null, null);
+                App.showToast(res.message);
+                await API.getMe(); // Update auth cache
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Kaydet';
+            }
+        }
+
+        // ── Şifre Değiştirme ──
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const btn = document.getElementById('updatePasswordBtn');
+            const oldPassword = document.getElementById('pOldPassword').value;
+            const newPassword = document.getElementById('pNewPassword').value;
+            const confirmPassword = document.getElementById('pConfirmPassword').value;
+            const name = document.getElementById('pName').value;
+
+            if (newPassword !== confirmPassword) {
+                App.showToast('Yeni şifreler birbiriyle eşleşmiyor.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Kaydediliyor...';
+
+            try {
+                const res = await API.updateProfile(name, oldPassword, newPassword);
+                App.showToast('Şifreniz başarıyla değiştirildi.');
+                document.getElementById('passwordForm').reset();
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Şifreyi Güncelle';
+            }
+        }
+
+        // ── Araçlarım Mantığı (dashboard.html'den taşındı) ──
+        async function loadVehicles() {
+            try {
+                const vehicles = await API.getVehicles();
+                const container = document.getElementById('vehicleList');
+
+                if (vehicles.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state-box">
+                            <div style="font-size:32px; margin-bottom:8px;">🚗</div>
+                            Henüz kayıtlı aracınız yok.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = vehicles.map(v => `
+                    <div class="vehicle-item">
+                        <div class="vehicle-info">
+                            <div class="vehicle-icon">🚗</div>
+                            <div>
+                                <div class="vehicle-name">${v.brand} ${v.model}</div>
+                                <div class="vehicle-details">
+                                    <span>🔋 ${v.battery_capacity} kWh</span>
+                                    <span>🔌 ${v.connector_type}</span>
+                                    <span>⚡ ${v.max_charge_rate} kW</span>
+                                    <span>🏷️ ${v.plate_number}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="removeVehicle(${v.id})">Sil</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                App.showToast('Araçlar yüklenemedi.', 'error');
+            }
+        }
+
+        function openAddVehicleModal() {
+            document.getElementById('addVehicleModal').classList.add('show');
+        }
+
+        function closeAddVehicleModal() {
+            document.getElementById('addVehicleModal').classList.remove('show');
+            ['vBrand','vModel','vBattery','vConnector','vMaxCharge','vPlate'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        }
+
+        async function addVehicle() {
+            const brand = document.getElementById('vBrand').value.trim();
+            const model = document.getElementById('vModel').value.trim();
+            const battery = document.getElementById('vBattery').value.trim();
+            const connector = document.getElementById('vConnector').value;
+            const maxCharge = document.getElementById('vMaxCharge').value.trim();
+            const plate = document.getElementById('vPlate').value.trim();
+
+            if (!brand || !model || !battery || !connector || !maxCharge || !plate) {
+                App.showToast('Lütfen tüm alanları doldurun.', 'error');
+                return;
+            }
+
+            try {
+                await API.addVehicle({
+                    brand, model,
+                    batteryCapacity: Number(battery),
+                    connectorType: connector,
+                    maxChargeRate: Number(maxCharge),
+                    plateNumber: plate.toUpperCase(),
+                });
+                closeAddVehicleModal();
+                loadVehicles();
+                App.showToast('✅ Araç başarıyla eklendi!');
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            }
+        }
+
+        function removeVehicle(vehicleId) {
+            openConfirmModal('Bu aracı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.', async () => {
+                try {
+                    await API.deleteVehicle(vehicleId);
+                    loadVehicles();
+                    App.showToast('Araç silindi.', 'success');
+                } catch (err) {
+                    // Aktif rezervasyon uyarısı geldi mi?
+                    if (err.message && err.message.includes('aktif rezervasyon')) {
+                        openConfirmModal('⚠️ ' + err.message + '\n\nDevam etmek istiyor musunuz?', async () => {
+                            try {
+                                await API.deleteVehicle(vehicleId, true);
+                                loadVehicles();
+                                App.showToast('Araç ve ilişkili rezervasyonlar silindi/iptal edildi.', 'success');
+                            } catch (err2) {
+                                App.showToast('Hata: ' + err2.message, 'error');
+                            }
+                        });
+                    } else {
+                        App.showToast('Hata: ' + err.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // ── Kartlarım Mantığı ──
+        async function loadCards() {
+            try {
+                const cards = await API.getCards();
+                const container = document.getElementById('cardsList');
+
+                if (cards.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state-box">
+                            <div style="font-size:32px; margin-bottom:8px;">💳</div>
+                            Henüz kayıtlı bir kredi kartınız bulunmuyor.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = cards.map(c => `
+                    <div class="credit-card-item">
+                        <div class="cc-info">
+                            <div class="cc-icon">💳</div>
+                            <div class="cc-details">
+                                <div class="cc-name">${c.card_name}</div>
+                                <div class="cc-number">${c.card_number}</div>
+                                <div class="cc-expiry">SKT: ${c.expiry_date}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCard(${c.id})">Sil</button>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                App.showToast('Kartlar yüklenemedi.', 'error');
+            }
+        }
+
+        function openAddCardModal() {
+            document.getElementById('addCardModal').classList.add('show');
+        }
+
+        function closeAddCardModal() {
+            document.getElementById('addCardModal').classList.remove('show');
+            document.getElementById('addCardForm').reset();
+        }
+
+        function formatCardNumber(input) {
+            let val = input.value.replace(/\D/g, '');
+            let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+            input.value = formatted;
+        }
+
+        function formatExpiry(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length >= 2) {
+                input.value = val.substring(0,2) + '/' + val.substring(2,4);
+            } else {
+                input.value = val;
+            }
+        }
+
+        async function handleAddCard(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addCardBtn');
+            const cName = document.getElementById('cName').value;
+            const cNumber = document.getElementById('cNumber').value;
+            const cExpiry = document.getElementById('cExpiry').value;
+
+            btn.disabled = true;
+            btn.textContent = 'Ekleniyor...';
+
+            try {
+                await API.addCard(cName, cNumber, cExpiry);
+                App.showToast('✅ Kart başarıyla eklendi.');
+                closeAddCardModal();
+                loadCards();
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Kartı Kaydet';
+            }
+        }
+
+        async function deleteCard(id) {
+            openConfirmModal('Bu kartı silmek istediğinize emin misiniz?', async () => {
+                try {
+                    await API.deleteCard(id);
+                    App.showToast('Kart başarıyla silindi.', 'success');
+                    loadCards();
+                } catch (err) {
+                    App.showToast('Hata: ' + err.message, 'error');
+                }
+            });
+        }
+
+        // ── Confirm Modal Yöneticisi ──
+        let confirmActionCb = null;
+        function openConfirmModal(message, cb) {
+            document.getElementById('confirmModalText').textContent = message;
+            confirmActionCb = cb;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+        function closeConfirmModal() {
+            confirmActionCb = null;
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+        document.getElementById('confirmModalBtn').addEventListener('click', async () => {
+            if (confirmActionCb) {
+                const cb = confirmActionCb;
+                closeConfirmModal();
+                await cb();
+            }
+        });
+
+        // Overlay tıklamaları
+        document.getElementById('addVehicleModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddVehicleModal();
+        });
+        document.getElementById('addCardModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddCardModal();
+        });
+        document.getElementById('confirmModal').addEventListener('click', function(e) {
+            if (e.target === this) closeConfirmModal();
+        });
+    </script>
+</body>
+</html>
