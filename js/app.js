@@ -80,19 +80,10 @@ const App = {
         }, 3000);
     },
 
-    // ── ID üretici ──
-    generateId(prefix = '') {
-        return prefix + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-    },
-
     // ── Tarih formatlama ──
     formatDate(dateStr) {
         const d = new Date(dateStr);
         return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
-    },
-
-    formatTime(timeStr) {
-        return timeStr;
     },
 
     formatCurrency(amount) {

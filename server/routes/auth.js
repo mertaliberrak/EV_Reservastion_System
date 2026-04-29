@@ -22,7 +22,10 @@ const TOKEN_EXPIRY = '24h';
 router.post('/register', [
     body('name').trim().notEmpty().withMessage('İsim gereklidir.'),
     body('email').isEmail().normalizeEmail().withMessage('Geçerli bir e-posta adresi giriniz.'),
-    body('password').isLength({ min: 6 }).withMessage('Şifre en az 6 karakter olmalıdır.'),
+    body('password')
+        .isLength({ min: 6 }).withMessage('Şifre en az 6 karakter olmalıdır.')
+        .matches(/[A-Z]/).withMessage('Şifre en az bir büyük harf içermelidir.')
+        .matches(/[^a-zA-Z0-9]/).withMessage('Şifre en az bir özel karakter içermelidir.'),
 ], (req, res) => {
     // Validasyon hataları
     const errors = validationResult(req);

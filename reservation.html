@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,6 +13,7 @@
             max-width: 600px;
             margin: 0 auto;
         }
+
         .form-section {
             background: var(--card2);
             padding: 24px;
@@ -19,6 +21,7 @@
             border: 1px solid var(--border);
             margin-bottom: 24px;
         }
+
         .form-section h3 {
             font-size: 18px;
             font-weight: 600;
@@ -26,41 +29,72 @@
             border-bottom: 1px solid var(--border);
             padding-bottom: 8px;
         }
+
         .form-group {
             margin-bottom: 16px;
         }
+
         .form-group label {
             display: block;
             font-size: 14px;
             color: var(--muted);
             margin-bottom: 8px;
         }
-        
+
         /* Uyumluluk rozeti */
         #compatBadge {
             margin-top: 12px;
         }
+
         .compat-ok {
-            background: rgba(0,229,160,.08); border: 1px solid rgba(0,229,160,.25);
-            color: var(--green); padding: 12px; border-radius: var(--radius);
-            font-size: 14px; font-weight: 600; text-align: center;
+            background: rgba(0, 229, 160, .08);
+            border: 1px solid rgba(0, 229, 160, .25);
+            color: var(--green);
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
         }
+
         .compat-no {
-            background: rgba(255,68,102,.08); border: 1px solid rgba(255,68,102,.25);
-            color: var(--danger); padding: 12px; border-radius: var(--radius);
-            font-size: 14px; font-weight: 600; text-align: center;
+            background: rgba(255, 68, 102, .08);
+            border: 1px solid rgba(255, 68, 102, .25);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
         }
     </style>
 </head>
+
 <body>
     <header class="navbar" id="navbar"></header>
+
+    <!-- Araç Yok Uyarı Modalı -->
+    <div class="modal-overlay" id="noVehicleModal" style="display:none;">
+        <div class="modal" style="width: min(440px, 90vw); text-align: center; padding: 40px;">
+            <div style="font-size: 64px; margin-bottom: 16px;">🚗</div>
+            <h3 style="margin-bottom: 12px; font-size: 22px;">Kayıtlı Aracınız Yok</h3>
+            <p style="color: var(--muted); margin-bottom: 28px; line-height: 1.6;">
+                Rezervasyon yapabilmek için önce bir araç eklemelisiniz.<br>
+                Araçlarım sayfasından hızlıca ekleyebilirsiniz.
+            </p>
+            <a href="profile.html#vehicles" class="btn btn-primary"
+                style="width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; text-decoration: none;">
+                🚗 Araç Ekle
+            </a>
+        </div>
+    </div>
 
     <div class="container res-container">
         <h1>📅 Rezervasyon Yap</h1>
         <p style="color:var(--muted); margin-bottom: 24px;">Şarj istasyonunuzu önceden ayırtın ve sıra beklemeyin.</p>
 
         <form id="reservationForm" onsubmit="handleReservation(event)">
-            
+
             <!-- İstasyon ve Ünite -->
             <div class="form-section">
                 <h3>📍 Lokasyon</h3>
@@ -120,11 +154,13 @@
                 </div>
             </div>
 
-            <div id="costEstimate" style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: 600; color: var(--text);">
+            <div id="costEstimate"
+                style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: 600; color: var(--text);">
                 Tahmini Tutar: <span id="costAmount">0.00</span> ₺
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width:100%; height:50px; font-size:16px;" id="submitBtn">
+            <button type="submit" class="btn btn-primary" style="width:100%; height:50px; font-size:16px;"
+                id="submitBtn">
                 Rezervasyonu Onayla
             </button>
         </form>
@@ -164,6 +200,12 @@
             `;
 
             await loadData();
+
+            // Araç yoksa modal göster
+            if (userVehicles.length === 0) {
+                document.getElementById('noVehicleModal').style.display = 'flex';
+                return;
+            }
         })();
 
         async function loadData() {
@@ -179,7 +221,7 @@
 
                 // İstasyonları doldur
                 const stationSelect = document.getElementById('resStation');
-                stationSelect.innerHTML = '<option value="">Seçiniz...</option>' + 
+                stationSelect.innerHTML = '<option value="">Seçiniz...</option>' +
                     stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
                 // Araçları doldur
@@ -187,7 +229,7 @@
                 if (vehicles.length === 0) {
                     vehicleSelect.innerHTML = '<option value="">Henüz kayıtlı aracınız yok</option>';
                 } else {
-                    vehicleSelect.innerHTML = '<option value="">Seçiniz...</option>' + 
+                    vehicleSelect.innerHTML = '<option value="">Seçiniz...</option>' +
                         vehicles.map(v => `<option value="${v.id}">${v.brand} ${v.model} (${v.connector_type})</option>`).join('');
                 }
 
@@ -196,8 +238,8 @@
                     stationSelect.value = preselectedStation;
                     loadChargers();
                     if (preselectedCharger) {
-                        setTimeout(() => { 
-                            document.getElementById('resCharger').value = preselectedCharger; 
+                        setTimeout(() => {
+                            document.getElementById('resCharger').value = preselectedCharger;
                             checkCompat();
                         }, 100);
                     }
@@ -215,7 +257,7 @@
         function loadChargers() {
             const stationId = document.getElementById('resStation').value;
             const chargerSelect = document.getElementById('resCharger');
-            
+
             if (!stationId) {
                 chargerSelect.innerHTML = '<option value="">Önce istasyon seçin</option>';
                 chargerSelect.disabled = true;
@@ -228,7 +270,7 @@
 
             const isStationOffline = station && station.status === 'offline';
 
-            chargerSelect.innerHTML = '<option value="">Şarj ünitesi seçin...</option>' + 
+            chargerSelect.innerHTML = '<option value="">Şarj ünitesi seçin...</option>' +
                 chargers.map(c => {
                     const isOffline = isStationOffline || c.status === 'offline';
                     return `
@@ -236,7 +278,7 @@
                         ${c.type} ${c.power}kW (${c.connector_type}) - ${Number(c.price_per_kwh).toFixed(2)} ₺/kWh ${isOffline ? '(Çevrimdışı)' : ''}
                     </option>
                 `}).join('');
-            
+
             chargerSelect.disabled = false;
             checkCompat();
         }
@@ -288,9 +330,9 @@
             try {
                 // Backend'den rezerve edilmiş aralıkları al
                 const bookedSlots = await API.getChargerAvailability(chargerId, date);
-                
+
                 const now = new Date();
-                
+
                 // Saatleri dakika cinsine çeviren yardımcı fonksiyon
                 function timeToMins(timeStr) {
                     const [hh, mm] = timeStr.split(':').map(Number);
@@ -304,8 +346,8 @@
                 for (let h = 0; h < 24; h++) {
                     for (let m = 0; m < 60; m += 15) {
                         // Seçilen tarihi kullanarak slot zamanını oluştur
-                        const slotTime = new Date(date + 'T' + 
-                            h.toString().padStart(2, '0') + ':' + 
+                        const slotTime = new Date(date + 'T' +
+                            h.toString().padStart(2, '0') + ':' +
                             m.toString().padStart(2, '0') + ':00');
 
                         // Şu anla arasındaki fark (dakika)
@@ -323,15 +365,15 @@
 
                         // Saat formatı (HH:MM)
                         const slotStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                        
+
                         // Bitiş saatini hesapla
                         const endM = m + durationMins;
                         const endH = h + Math.floor(endM / 60);
                         const finalM = endM % 60;
-                        
+
                         // Aynı günde kalamıyorsa (gece 12'yi geçiyorsa) bu slotu atla
                         if (endH >= 24) continue;
-                        
+
                         const endStr = `${endH.toString().padStart(2, '0')}:${finalM.toString().padStart(2, '0')}`;
 
                         // Bu slot [slotStr, endStr) aralığı için müsait mi? (15 Dk Buffer Dahil)
@@ -342,7 +384,7 @@
                         for (let booked of bookedSlots) {
                             const bStartMins = timeToMins(booked.start_slot);
                             const bEndMins = timeToMins(booked.end_slot);
-                            
+
                             // 15 Dk Boşluk Kuralı: Mevcut rezervasyonun etrafında 15'er dakika tampon var
                             if (Math.max(bStartMins - 15, newStartMins) < Math.min(bEndMins + 15, newEndMins)) {
                                 isConflict = true;
@@ -351,7 +393,7 @@
                         }
 
                         if (isConflict) {
-                            // slotHTML += `<option value="" disabled>${slotStr} (Dolu)</option>`; // İstenirse dolu olanlar gösterilebilir
+                            // slotsHTML += `<option value="" disabled>${slotStr} (Dolu)</option>`; // İstenirse dolu olanlar gösterilebilir
                         } else {
                             slotsHTML += `<option value="${slotStr}">${slotStr} (${durationMins} dk)</option>`;
                             hasAvailable = true;
@@ -385,9 +427,9 @@
             }
 
             const stationId = document.getElementById('resStation').value;
-            if(!stationId) return;
+            if (!stationId) return;
             const station = allStations.find(s => String(s.id) === stationId);
-            if(!station) return;
+            if (!station) return;
             const charger = station.chargers.find(c => String(c.id) === chargerId);
 
             if (charger) {
@@ -451,4 +493,5 @@
         }
     </script>
 </body>
+
 </html>
