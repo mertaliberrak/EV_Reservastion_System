@@ -16,6 +16,7 @@ const Charging = {
                 reservationId,
                 startTime: data.session.start_time,
                 pricePerKwh: data.session.price_per_kwh,
+                batteryStart: batteryStart,
                 batteryPercent: batteryStart,
                 energyConsumed: 0,
                 cost: 0,

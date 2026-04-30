@@ -345,13 +345,13 @@
                 let visible = true;
 
                 if (filters.connectorType) {
-                    visible = chargers.some(c => c.connectorType === filters.connectorType);
+                    visible = chargers.some(c => c.connector_type === filters.connectorType || c.connectorType === filters.connectorType);
                 }
                 if (visible && filters.minPower) {
                     visible = chargers.some(c => c.power >= Number(filters.minPower));
                 }
                 if (visible && filters.maxPrice) {
-                    visible = chargers.some(c => c.pricePerKwh <= Number(filters.maxPrice));
+                    visible = chargers.some(c => (c.price_per_kwh || c.pricePerKwh) <= Number(filters.maxPrice));
                 }
                 if (visible && filters.statusFilter && filters.statusFilter !== 'all') {
                     visible = MapModule.getStationOverallStatus(station) === filters.statusFilter;

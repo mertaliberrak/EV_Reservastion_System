@@ -192,8 +192,15 @@
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-            const todayStr = today.toISOString().split('T')[0];
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const getLocalDateStr = (d) => {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+
+            const todayStr = getLocalDateStr(today);
+            const tomorrowStr = getLocalDateStr(tomorrow);
 
             dateSelect.innerHTML = `
                 <option value="${todayStr}">Bugün (${todayStr})</option>

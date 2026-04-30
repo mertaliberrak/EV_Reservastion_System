@@ -38,7 +38,9 @@ router.get('/', (req, res) => {
 // ══════════════════════════════════════
 router.get('/charger/:chargerId/availability', (req, res) => {
     const { chargerId } = req.params;
-    const date = req.query.date || new Date().toISOString().split('T')[0]; // Default: today
+    const today = new Date();
+    const localDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const date = req.query.date || localDateStr; // Default: today (Local Timezone safe)
 
     const bookedSlots = db.prepare(
         `SELECT start_slot, end_slot FROM reservations

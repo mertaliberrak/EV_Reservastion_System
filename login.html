@@ -973,6 +973,27 @@
             drawCable();
         });
 
+        function resetPlug() {
+            plug.style.transition = 'all .4s cubic-bezier(.4,0,.2,1)';
+            plug.style.left = 'unset';
+            plug.style.top = 'unset';
+            plug.style.right = '64px';
+            plug.style.bottom = '52px';
+            
+            // Animasyon sırasında kabloyu sürekli güncelle
+            const startTime = performance.now();
+            function animateCable(time) {
+                if (time - startTime < 400) {
+                    drawCable();
+                    requestAnimationFrame(animateCable);
+                } else {
+                    drawCable();
+                    plug.style.transition = 'box-shadow .25s, border-color .25s';
+                }
+            }
+            requestAnimationFrame(animateCable);
+        }
+
         document.addEventListener('mouseup', () => {
             if (!dragging) return;
             dragging = false;
@@ -983,6 +1004,8 @@
             const dy = Math.abs((plugRect.top + plugRect.height / 2) - (portRect.top + portRect.height / 2));
             if (dx < 38 && dy < 38) {
                 connectPlug();
+            } else {
+                resetPlug();
             }
         });
 
@@ -1018,22 +1041,21 @@
             const plugRect = plug.getBoundingClientRect();
             const dx = Math.abs((plugRect.left + plugRect.width / 2) - (portRect.left + portRect.width / 2));
             const dy = Math.abs((plugRect.top + plugRect.height / 2) - (portRect.top + portRect.height / 2));
-            if (dx < 38 && dy < 38) connectPlug();
+            if (dx < 38 && dy < 38) {
+                connectPlug();
+            } else {
+                resetPlug();
+            }
         });
 
         // ── Button fallback click ──────────────────────────
-        connectBtn.addEventListener('click', () => {
+        connectBtn.addEventListener('click', async () => {
             if (connected) return;
-            // validate önce; başarısız olursa buton açık kalır
-            if (!validate()) return;
             connectBtn.disabled = true;
-            connectPlug();
-        });
-
-        // ── Click on plug (instant connect) ───────────────
-        plug.addEventListener('click', e => {
-            if (connected || dragging) return;
-            connectPlug();
+            await connectPlug();
+            if (!connected) {
+                connectBtn.disabled = false;
+            }
         });
 
         // ── Initial cable draw ─────────────────────────────
