@@ -157,11 +157,19 @@ const MapModule = {
                               font-size:13px;font-weight:600;text-decoration:none;display:inline-block;">
                         Detay Gör
                     </a>
+                    ${this.getStationOverallStatus(station) === 'offline' ? `
+                    <button onclick="App.showToast('Bu istasyon şu an çevrimdışı. Lütfen başka bir istasyon seçin.', 'error')" 
+                       style="background:#666;color:#ccc;padding:7px 14px;border-radius:8px;
+                              font-size:13px;font-weight:600;border:none;cursor:not-allowed;display:inline-block;">
+                        📅 Rezervasyon Kapalı
+                    </button>
+                    ` : `
                     <a href="reservation.html?station=${station.id}" 
                        style="background:#00a8e8;color:#fff;padding:7px 14px;border-radius:8px;
                               font-size:13px;font-weight:600;text-decoration:none;display:inline-block;">
                         📅 Rezervasyon
                     </a>
+                    `}
                     <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" 
                        target="_blank"
                        style="background:#4285F4;color:#fff;padding:7px 14px;border-radius:8px;

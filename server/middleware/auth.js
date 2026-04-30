@@ -15,7 +15,13 @@ function authenticateToken(req, res, next) {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // { id, email, iat, exp }
+        
+        // Sunucu restart kontrolü
+        if (decoded.sessionId !== req.app.get('serverSessionId')) {
+            return res.status(401).json({ error: 'Oturum sunucu değişikliği nedeniyle sonlandırıldı. Lütfen tekrar giriş yapın.' });
+        }
+
+        req.user = decoded; // { id, email, sessionId, iat, exp }
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Geçersiz veya süresi dolmuş token.' });

@@ -171,16 +171,18 @@
         .strength-bar-wrap {
             margin-top: 6px;
             height: 4px;
-            background: rgba(255,255,255,.06);
+            background: rgba(255, 255, 255, .06);
             border-radius: 99px;
             overflow: hidden;
         }
+
         .strength-bar {
             height: 100%;
             width: 0%;
             border-radius: 99px;
             transition: width .3s, background .3s;
         }
+
         .strength-label {
             font-size: 11px;
             margin-top: 4px;
@@ -196,11 +198,27 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0) }
-            20% { transform: translateX(-6px) }
-            40% { transform: translateX(6px) }
-            60% { transform: translateX(-4px) }
-            80% { transform: translateX(4px) }
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            20% {
+                transform: translateX(-6px)
+            }
+
+            40% {
+                transform: translateX(6px)
+            }
+
+            60% {
+                transform: translateX(-4px)
+            }
+
+            80% {
+                transform: translateX(4px)
+            }
         }
 
         /* ── toast ── */
@@ -218,16 +236,19 @@
             transition: opacity .25s, transform .25s;
             z-index: 30;
         }
+
         .toast.error {
             background: rgba(255, 68, 102, .12);
             border: 1px solid rgba(255, 68, 102, .4);
             color: #ff7a95;
         }
+
         .toast.success {
             background: rgba(0, 229, 160, .12);
             border: 1px solid rgba(0, 229, 160, .4);
             color: var(--green);
         }
+
         .toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
@@ -272,8 +293,15 @@
         }
 
         @keyframes popIn {
-            from { transform: scale(0); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* footer */
@@ -307,8 +335,15 @@
         }
 
         @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: .06; }
-            100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: .06;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(1.4);
+                opacity: 0;
+            }
         }
 
         /* ── EV icon animation ── */
@@ -316,21 +351,30 @@
             text-align: center;
             margin-bottom: 24px;
         }
+
         .ev-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 72px;
             height: 72px;
-            background: linear-gradient(135deg, rgba(0,229,160,.12), rgba(0,168,232,.12));
+            background: linear-gradient(135deg, rgba(0, 229, 160, .12), rgba(0, 168, 232, .12));
             border: 1px solid var(--border);
             border-radius: 20px;
             font-size: 36px;
             animation: float 3s ease-in-out infinite;
         }
+
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
     </style>
 </head>
@@ -414,9 +458,9 @@
             }
         })();
 
-        // ── Zaten giriş yapılmışsa dashboard'a yönlendir ──
+        // ── Oturum varsa temizle (kullanıcı kayıt sayfasına gelmişse taze işlem istiyordur) ──
         if (Auth.isLoggedIn()) {
-            window.location.href = 'dashboard.html';
+            Auth.logout();
         }
 
         // ── References ──
@@ -524,9 +568,9 @@
 
             try {
                 const data = await API.register(name, email, password);
-                
+
                 // Başarılı kayıt
-                document.getElementById('successName').textContent = 
+                document.getElementById('successName').textContent =
                     `Hoş geldiniz ${name}! Yönlendiriliyorsunuz...`;
                 successOverlay.classList.add('show');
 

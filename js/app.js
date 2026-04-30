@@ -7,6 +7,29 @@
 const App = {
     // Önbelleklenmiş kullanıcı bilgisi
     _cachedUser: null,
+    // 3 saatlik (ms) zaman aşımı
+    _INACTIVITY_LIMIT: 3 * 60 * 60 * 1000,
+
+    // ── Aktivite zamanını güncelle (Throttled: 5 saniyede bir) ──
+    _lastUpdate: 0,
+    updateActivity() {
+        const now = Date.now();
+        if (now - this._lastUpdate > 5000) {
+            localStorage.setItem('lastActivity', now);
+            this._lastUpdate = now;
+        }
+    },
+
+    // ── Zaman aşımını kontrol et ──
+    checkInactivity() {
+        const last = localStorage.getItem('lastActivity');
+        if (last && (Date.now() - parseInt(last) > this._INACTIVITY_LIMIT)) {
+            console.warn('Oturum zaman aşımına uğradı.');
+            this.logout();
+            return true;
+        }
+        return false;
+    },
 
     // ── Navbar'ı oluştur ──
     renderNavbar(activePage) {
@@ -22,7 +45,7 @@ const App = {
                 <a href="dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>🏠 <span>Panel</span></a>
                 <a href="wallet.html" ${activePage === 'wallet' ? 'class="active"' : ''}>💳 <span>Cüzdan</span></a>
                 <a href="map.html" ${activePage === 'map' ? 'class="active"' : ''}>🗺️ <span>Harita</span></a>
-                <a href="map.html?action=reserve" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Rezervasyon</span></a>
+                <a href="reservation.html" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Rezervasyon</span></a>
                 <a href="charging.html" ${activePage === 'charging' ? 'class="active"' : ''}>⚡ <span>Şarj</span></a>
                 <a href="profile.html" ${activePage === 'profile' ? 'class="active"' : ''}>👤 <span>Profil</span></a>
                 <button class="btn-logout" onclick="App.logout()">🚪 Çıkış</button>
@@ -32,10 +55,16 @@ const App = {
 
     // ── Oturum kontrolü (async — sunucu doğrulaması) ──
     async requireAuth() {
+        // Zaman aşımı kontrolü
+        if (this.checkInactivity()) return null;
+
         if (!Auth.isLoggedIn()) {
             window.location.href = 'login.html';
             return null;
         }
+
+        // Aktiviteyi güncelle
+        this.updateActivity();
 
         try {
             const user = await Auth.getCurrentUser();
@@ -90,3 +119,9 @@ const App = {
         return Number(amount).toFixed(2) + ' ₺';
     },
 };
+
+// ── Global Aktivite Takibi ──
+window.addEventListener('mousemove', () => App.updateActivity());
+window.addEventListener('keydown', () => App.updateActivity());
+window.addEventListener('click', () => App.updateActivity());
+window.addEventListener('scroll', () => App.updateActivity());

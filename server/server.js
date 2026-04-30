@@ -16,6 +16,10 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Her başlatıldığında değişen benzersiz sunucu ID'si (Restart logout için)
+const SERVER_SESSION_ID = Math.random().toString(36).substring(7);
+app.set('serverSessionId', SERVER_SESSION_ID);
+
 // ══════════════════════════════════════
 //  MIDDLEWARE
 // ══════════════════════════════════════
@@ -35,20 +39,20 @@ app.use(cors({
 // Body parser
 app.use(express.json({ limit: '1mb' }));
 
-// Genel rate limiter (100 istek / 15 dakika)
+// Genel rate limiter (1000 istek / 15 dakika - Geliştirme için artırıldı)
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000,
     message: { error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
 app.use('/api/', generalLimiter);
 
-// Login rate limiter (5 deneme / 15 dakika) — brute-force koruması
+// Login rate limiter (50 deneme / 15 dakika - Geliştirme için artırıldı)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 50,
     message: { error: 'Çok fazla giriş denemesi. Lütfen 15 dakika sonra tekrar deneyin.' },
     standardHeaders: true,
     legacyHeaders: false,

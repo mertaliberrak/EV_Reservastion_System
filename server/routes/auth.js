@@ -51,7 +51,7 @@ router.post('/register', [
 
     // JWT token oluştur
     const token = jwt.sign(
-        { id: result.lastInsertRowid, email },
+        { id: result.lastInsertRowid, email, sessionId: req.app.get('serverSessionId') },
         process.env.JWT_SECRET,
         { expiresIn: TOKEN_EXPIRY }
     );
@@ -95,7 +95,7 @@ router.post('/login', [
 
     // JWT token oluştur
     const token = jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id, email: user.email, sessionId: req.app.get('serverSessionId') },
         process.env.JWT_SECRET,
         { expiresIn: TOKEN_EXPIRY }
     );

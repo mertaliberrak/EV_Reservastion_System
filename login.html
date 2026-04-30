@@ -766,9 +766,9 @@
         const dot2 = document.getElementById('dot2');
         const dot3 = document.getElementById('dot3');
 
-        // ── Zaten giriş yapılmışsa dashboard'a yönlendir ────
+        // ── Oturum varsa temizle (kullanıcı login sayfasına gelmişse taze giriş istiyordur) ──
         if (Auth.isLoggedIn()) {
-            window.location.href = 'dashboard.html';
+            Auth.logout();
         }
 
         // ── References (extra) ─────────────────────────────
@@ -931,7 +931,7 @@
             try {
                 const data = await API.getMe();
                 if (data && data.user) userName = data.user.name;
-            } catch(e) {}
+            } catch (e) { }
             document.querySelector('.success-sub').textContent = 'Hoş geldiniz, ' + userName + '!';
             successOverlay.classList.add('show');
             setTimeout(() => {
