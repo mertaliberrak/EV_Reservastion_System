@@ -104,6 +104,16 @@
             </a>
         </div>
 
+        <!-- Favoriler -->
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+                <h2>❤️ Favori İstasyonlarım</h2>
+            </div>
+            <div id="favoritesList" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+                <p style="color:var(--muted); font-size:14px; padding:12px;">Henüz favori istasyonunuz yok.</p>
+            </div>
+        </div>
+
         <!-- Aktif Rezervasyonlar -->
         <div class="card" style="margin-top: 24px;">
             <div class="card-header">
@@ -140,7 +150,46 @@
             document.getElementById('userName').textContent = user.name || 'Kullanıcı';
 
             renderReservations();
+            renderFavorites();
         })();
+
+        // ── Favorileri Yükle ──
+        async function renderFavorites() {
+            const list = document.getElementById('favoritesList');
+            try {
+                const favorites = await API.getFavorites();
+                if (favorites.length === 0) {
+                    list.innerHTML = '<p style="color:var(--muted); font-size:14px; padding:12px;">Henüz favori istasyonunuz yok. İstasyon detay sayfasından ekleyebilirsiniz.</p>';
+                    return;
+                }
+
+                list.innerHTML = favorites.map(f => `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 250px; flex-shrink: 0;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <h3 style="font-size:16px;">📍 ${f.name}</h3>
+                            <button onclick="toggleFavoriteFromDashboard(${f.id})" style="background:none; border:none; color:red; cursor:pointer; font-size:16px;" title="Favorilerden Çıkar">✖</button>
+                        </div>
+                        <p style="font-size:12px; color:var(--muted); margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.address}</p>
+                        <div style="display:flex; gap:8px;">
+                            <a href="station-detail.html?id=${f.id}" class="btn btn-secondary btn-sm" style="flex:1;">İncele</a>
+                            <a href="reservation.html?station=${f.id}" class="btn btn-primary btn-sm" style="flex:1;">Randevu</a>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<p style="color:var(--danger); font-size:14px; padding:12px;">Favoriler yüklenirken hata oluştu.</p>';
+            }
+        }
+
+        async function toggleFavoriteFromDashboard(stationId) {
+            try {
+                const res = await API.toggleFavorite(stationId);
+                App.showToast(res.message);
+                renderFavorites(); // Listeyi yenile
+            } catch(e) {
+                App.showToast('Hata: ' + e.message, 'error');
+            }
+        }
 
         // ── In-App Confirm Modal Logic ──
         let confirmActionCb = null;

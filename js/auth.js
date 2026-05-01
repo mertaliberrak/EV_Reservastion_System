@@ -8,6 +8,7 @@ const Auth = {
     async register(name, email, password) {
         try {
             const data = await API.register(name, email, password);
+            localStorage.setItem('lastActivity', Date.now());
             return { success: true, user: data.user, token: data.token };
         } catch (err) {
             return { success: false, message: err.message };
@@ -18,6 +19,7 @@ const Auth = {
     async login(email, password) {
         try {
             const data = await API.login(email, password);
+            localStorage.setItem('lastActivity', Date.now());
             return { success: true, user: data.user, token: data.token };
         } catch (err) {
             return { success: false, message: err.message };

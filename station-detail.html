@@ -117,6 +117,7 @@
         const stationId = params.get('id');
         let station = null;
         let vehicles = [];
+        let isFavorite = false;
 
         // ── Sayfayı yükle ──
         async function loadPage() {
@@ -128,6 +129,16 @@
                 station = await API.getStation(stationId);
             } catch(e) {
                 station = null;
+            }
+
+            if (station) {
+                try {
+                    const favorites = await API.getFavorites();
+                    isFavorite = favorites.some(f => f.id === station.id);
+                } catch(e) {
+                    console.error("Favoriler yüklenemedi:", e);
+                    isFavorite = false;
+                }
             }
 
             if (!station) {
@@ -162,11 +173,28 @@
                 </div>
                 <div class="hero-actions">
                     <a href="reservation.html?station=${station.id}" class="btn btn-primary">📅 Rezervasyon Yap</a>
+                    <button class="btn btn-secondary" onclick="toggleFavorite()" id="favBtn">
+                        ${isFavorite ? '❤️ Favorilerde' : '🤍 Favorilere Ekle'}
+                    </button>
                     <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}"
                        target="_blank" class="btn btn-secondary">🧭 Yol Tarifi</a>
                     <a href="map.html" class="btn btn-secondary">← Haritaya Dön</a>
                 </div>
             `;
+        }
+
+        async function toggleFavorite() {
+            try {
+                const res = await API.toggleFavorite(station.id);
+                isFavorite = res.isFavorite;
+                const btn = document.getElementById('favBtn');
+                if (btn) {
+                    btn.innerHTML = isFavorite ? '❤️ Favorilerde' : '🤍 Favorilere Ekle';
+                }
+                App.showToast(res.message);
+            } catch(err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            }
         }
 
         // ── Araç seçimi dropdown'ı ──
