@@ -68,6 +68,7 @@ const stationRoutes = require('./routes/stations');
 const reservationRoutes = require('./routes/reservations');
 const sessionRoutes = require('./routes/sessions');
 const profileRoutes = require('./routes/profile');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/login', loginLimiter); // Login'e özel rate limit
@@ -76,6 +77,7 @@ app.use('/api/stations', stationRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Google Maps API key endpoint — key backend'de kalır
 app.get('/api/config/maps-key', (req, res) => {

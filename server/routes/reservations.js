@@ -10,6 +10,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const auth = require('../middleware/auth');
+const { logAction } = require('../utils/auditLogger');
 
 // Tüm route'lar auth gerektirir
 router.use(auth);
@@ -214,6 +215,9 @@ router.post('/', [
          JOIN vehicles v ON r.vehicle_id = v.id
          WHERE r.id = ?`
     ).get(resId);
+
+    // Audit Log
+    logAction(req.user.id, 'RESERVATION_CREATED', { reservationId: resId, date, startSlot, endSlot, cost: estimatedCost }, req.ip);
 
     res.status(201).json({ message: 'Rezervasyon oluşturuldu.', reservation });
 });
@@ -519,6 +523,9 @@ router.delete('/:id', (req, res) => {
     } catch (e) {
         return res.status(500).json({ error: 'İptal işlemi sırasında bir hata oluştu.' });
     }
+
+    // Audit Log
+    logAction(req.user.id, 'RESERVATION_CANCELLED', { reservationId: req.params.id, refundAmount }, req.ip);
 
     res.json({ message: `Rezervasyon iptal edildi. Cüzdanınıza iade edilen tutar: ${refundAmount.toFixed(2)} ₺` });
 });

@@ -59,10 +59,10 @@ const API = {
     },
 
     // ── Kısayol metodları ──
-    get(path)        { return this.request('GET', path); },
+    get(path) { return this.request('GET', path); },
     post(path, body) { return this.request('POST', path, body); },
-    delete(path)     { return this.request('DELETE', path); },
-    patch(path, body){ return this.request('PATCH', path, body); },
+    delete(path) { return this.request('DELETE', path); },
+    patch(path, body) { return this.request('PATCH', path, body); },
 
     // ══════════════════════════════════════
     //  AUTH
@@ -85,6 +85,14 @@ const API = {
 
     async getMe() {
         return this.get('/auth/me');
+    },
+
+    async forgotPassword(email) {
+        return this.post('/auth/forgot-password', { email });
+    },
+
+    async resetPassword(email, code, newPassword) {
+        return this.post('/auth/reset-password', { email, code, newPassword });
     },
 
     async addBalance(amount, cardId) {
@@ -111,10 +119,18 @@ const API = {
     },
 
     async deleteCard(id) {
-        return this.delete('/profile/cards/' + id);
+        return this.delete(`/profile/cards/${id}`);
     },
 
-    // ══════════════════════════════════════
+    async getFavorites() {
+        return this.get('/profile/favorites');
+    },
+
+    async toggleFavorite(stationId) {
+        return this.post('/profile/favorites', { stationId });
+    },
+
+    // ── ARAÇLAR ──══════════════════════════════════════
     //  VEHICLES
     // ══════════════════════════════════════
     async getVehicles() {
@@ -203,4 +219,21 @@ const API = {
         const data = await this.request('GET', '/config/maps-key');
         return data.key || '';
     },
+
+    // ══════════════════════════════════════
+    //  ADMIN
+    // ══════════════════════════════════════
+    async getAdminLogs() {
+        const data = await this.get('/admin/logs');
+        return data.logs || [];
+    },
+
+    async getAdminUsers() {
+        const data = await this.get('/admin/users');
+        return data.users || [];
+    },
+
+    async updateUserRole(id, is_admin) {
+        return this.request('PUT', `/admin/users/${id}/role`, { is_admin });
+    }
 };

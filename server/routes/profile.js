@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
+const { logAction } = require('../utils/auditLogger');
 
 router.use(auth);
 
@@ -134,7 +135,55 @@ router.post('/add-funds', (req, res) => {
         // Bakiyeyi güncelle
         db.prepare('UPDATE users SET balance = balance + ? WHERE id = ?').run(numAmount, req.user.id);
 
+        // Audit Log
+        logAction(req.user.id, 'PAYMENT', { amount: numAmount, method: 'CREDIT_CARD', cardId }, req.ip);
+
         res.json({ success: true, message: `${numAmount} ₺ başarıyla yüklendi.` });
+    } catch (err) {
+        res.status(500).json({ error: 'Sunucu hatası.' });
+    }
+});
+
+// GET /api/profile/favorites
+// Kullanıcının favori istasyonlarını getir
+router.get('/favorites', (req, res) => {
+    try {
+        const favorites = db.prepare(`
+            SELECT f.id as favorite_id, s.* 
+            FROM favorites f
+            JOIN stations s ON f.station_id = s.id
+            WHERE f.user_id = ?
+            ORDER BY f.created_at DESC
+        `).all(req.user.id);
+        
+        // Şarj ünitelerini de ekle
+        favorites.forEach(station => {
+            station.chargers = db.prepare('SELECT * FROM chargers WHERE station_id = ?').all(station.id);
+        });
+
+        res.json(favorites);
+    } catch (err) {
+        res.status(500).json({ error: 'Sunucu hatası.' });
+    }
+});
+
+// POST /api/profile/favorites
+// İstasyonu favorilere ekle veya çıkar (toggle)
+router.post('/favorites', (req, res) => {
+    try {
+        const { stationId } = req.body;
+        
+        const existing = db.prepare('SELECT id FROM favorites WHERE user_id = ? AND station_id = ?')
+                           .get(req.user.id, stationId);
+                           
+        if (existing) {
+            db.prepare('DELETE FROM favorites WHERE id = ?').run(existing.id);
+            return res.json({ success: true, isFavorite: false, message: 'Favorilerden çıkarıldı.' });
+        } else {
+            db.prepare('INSERT INTO favorites (user_id, station_id) VALUES (?, ?)')
+              .run(req.user.id, stationId);
+            return res.json({ success: true, isFavorite: true, message: 'Favorilere eklendi.' });
+        }
     } catch (err) {
         res.status(500).json({ error: 'Sunucu hatası.' });
     }

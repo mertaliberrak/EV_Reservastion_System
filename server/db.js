@@ -102,6 +102,46 @@ db.exec(`
         battery_end     REAL,
         status          TEXT    DEFAULT 'charging'
     );
+
+    -- Audit Logs (Denetim Kayıtları)
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        action      TEXT    NOT NULL,
+        details     TEXT,
+        ip_address  TEXT,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Şifre Sıfırlama Kodları (Demo Amaçlı)
+    CREATE TABLE IF NOT EXISTS password_resets (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        email       TEXT    NOT NULL,
+        code        TEXT    NOT NULL,
+        expires_at  DATETIME NOT NULL,
+        used        INTEGER DEFAULT 0,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Favori İstasyonlar
+    CREATE TABLE IF NOT EXISTS favorites (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        station_id  INTEGER NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, station_id)
+    );
 `);
+
+// is_admin sütunu daha önceden olmayan veritabanlarına eklemek için migration
+try {
+    const tableInfo = db.pragma('table_info(users)');
+    const hasAdminColumn = tableInfo.some(column => column.name === 'is_admin');
+    if (!hasAdminColumn) {
+        db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0;');
+    }
+} catch (err) {
+    console.error('Migration error for users table:', err);
+}
 
 module.exports = db;
