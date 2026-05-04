@@ -69,9 +69,42 @@
             align-items: center;
             justify-content: space-between;
         }
+        .reservation-item.unavailable {
+            border-color: rgba(255, 68, 102, .35);
+            background: rgba(255, 68, 102, .03);
+        }
         .res-info { flex: 1; }
         .res-station { font-size: 15px; font-weight: 600; }
         .res-time { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .res-warning {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--danger); margin-top: 6px;
+            background: rgba(255, 68, 102, .08); padding: 6px 12px;
+            border-radius: 8px; border: 1px solid rgba(255, 68, 102, .2);
+        }
+
+        /* Alternatives Modal */
+        .alt-modal { width: min(600px, 94vw); max-height: 80vh; overflow-y: auto; }
+        .alt-section-title {
+            font-size: 14px; font-weight: 700; color: var(--green);
+            margin: 20px 0 12px; text-transform: uppercase; letter-spacing: .5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .alt-card {
+            background: var(--card2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; transition: border-color .2s, box-shadow .2s;
+        }
+        .alt-card:hover {
+            border-color: rgba(0,229,160,.4);
+            box-shadow: 0 4px 16px rgba(0,229,160,.08);
+        }
+        .alt-card-info { flex: 1; }
+        .alt-card-name { font-size: 14px; font-weight: 600; }
+        .alt-card-details { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .alt-card-details span { display: flex; align-items: center; gap: 4px; }
+        .alt-empty { text-align: center; color: var(--muted); padding: 20px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -123,6 +156,28 @@
             <div class="modal-actions" style="justify-content: center;">
                 <button class="btn btn-secondary" onclick="closeConfirmModal()">Vazgeç</button>
                 <button class="btn btn-danger" id="confirmModalBtn">Evet, Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alternatif Önerileri Modalı -->
+    <div class="modal-overlay" id="altModal">
+        <div class="modal alt-modal">
+            <h3>🔄 Alternatif Şarj Ünitesi Önerileri</h3>
+            <p style="color: var(--muted); font-size: 14px; margin-bottom: 8px;">
+                Rezervasyonunuzdaki şarj ünitesi şu anda müsait değil.<br>
+                Aşağıdaki alternatiflerden birini seçerek rezervasyonunuzu taşıyabilirsiniz.
+            </p>
+            <div style="background:rgba(0,229,160,.06); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; font-size:13px;">
+                <strong>Araç:</strong> <span id="altVehicle">-</span> &nbsp;|&nbsp;
+                <strong>Zaman:</strong> <span id="altTimeSlot">-</span>
+            </div>
+            <div id="altContent">
+                <div class="loading-state"><div class="spinner" style="margin:20px auto;"></div></div>
+            </div>
+            <div class="modal-actions" style="margin-top:16px;">
+                <button class="btn btn-secondary" onclick="closeAltModal()">Kapat</button>
+                <button class="btn btn-danger btn-sm" id="altCancelBtn" style="display:none;">❌ Rezervasyonu İptal Et</button>
             </div>
         </div>
     </div>
@@ -185,18 +240,42 @@
                     return;
                 }
 
-                container.innerHTML = active.map(r => `
-                    <div class="reservation-item">
+                // Her rezervasyon için şarj cihazı durumunu kontrol et
+                let html = '';
+                for (const r of active) {
+                    let altData = null;
+                    try {
+                        altData = await API.getAlternatives(r.id);
+                    } catch (e) { /* ignore */ }
+
+                    const isUnavailable = altData && altData.is_unavailable;
+                    const chargerStatus = altData ? altData.current_charger_status : 'available';
+                    const statusLabel = chargerStatus === 'occupied' ? 'Kullanımda' :
+                                        chargerStatus === 'offline' ? 'Çevrimdışı' : '';
+
+                    html += `
+                    <div class="reservation-item ${isUnavailable ? 'unavailable' : ''}">
                         <div class="res-info">
                             <div class="res-station">📍 ${r.station_name || 'İstasyon'}</div>
                             <div class="res-time">${r.date} • ${r.start_slot} - ${r.end_slot}</div>
+                            ${isUnavailable ? `
+                            <div class="res-warning">
+                                ⚠️ Şarj ünitesi şu anda <strong>${statusLabel}</strong>.
+                                Alternatif bulmak için tıklayın.
+                            </div>` : ''}
                         </div>
-                        <div class="res-actions" style="display:flex; gap:8px;">
-                            <a href="charging.html?rid=${r.id}" class="btn btn-primary btn-sm">⚡ Şarj Başlat</a>
+                        <div class="res-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
+                            ${isUnavailable ? `
+                                <button class="btn btn-secondary btn-sm" style="border-color:rgba(255,215,0,.4); color:var(--warning);" onclick="showAlternatives(${r.id})">🔄 Alternatif Bul</button>
+                            ` : `
+                                <a href="charging.html?rid=${r.id}" class="btn btn-primary btn-sm">⚡ Şarj Başlat</a>
+                            `}
                             <button class="btn btn-danger btn-sm" onclick="cancelReservation(${r.id}, '${r.date}', '${r.start_slot}')">❌ İptal</button>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }
+
+                container.innerHTML = html;
             } catch (err) {
                 App.showToast('Rezervasyonlar yüklenemedi.', 'error');
             }
@@ -226,9 +305,107 @@
             });
         }
 
+        // ══════════════════════════════════════
+        //  ALTERNATİF ÖNERİLERİ
+        // ══════════════════════════════════════
+        let currentAltResId = null;
+
+        async function showAlternatives(reservationId) {
+            currentAltResId = reservationId;
+            document.getElementById('altModal').classList.add('show');
+            document.getElementById('altContent').innerHTML = '<div class="loading-state"><div class="spinner" style="margin:20px auto;"></div><p style="color:var(--muted);font-size:14px;">Alternatifler aranıyor...</p></div>';
+            document.getElementById('altCancelBtn').style.display = 'none';
+
+            try {
+                const data = await API.getAlternatives(reservationId);
+                document.getElementById('altVehicle').textContent = data.vehicle;
+                document.getElementById('altTimeSlot').textContent = `${data.date} • ${data.time_slot}`;
+
+                let html = '';
+
+                // Aynı istasyondaki alternatifler
+                html += '<div class="alt-section-title">🏢 Aynı İstasyondaki Alternatifler</div>';
+                if (data.same_station_alternatives.length === 0) {
+                    html += '<div class="alt-empty">Bu istasyonda uyumlu müsait ünite bulunamadı.</div>';
+                } else {
+                    data.same_station_alternatives.forEach(alt => {
+                        html += renderAltCard(alt, reservationId);
+                    });
+                }
+
+                // Yakın istasyonlardaki alternatifler
+                html += '<div class="alt-section-title">📍 Yakın İstasyonlardaki Alternatifler</div>';
+                if (data.nearby_station_alternatives.length === 0) {
+                    html += '<div class="alt-empty">15 km içinde uyumlu müsait istasyon bulunamadı.</div>';
+                } else {
+                    data.nearby_station_alternatives.forEach(alt => {
+                        html += renderAltCard(alt, reservationId);
+                    });
+                }
+
+                if (data.total_alternatives === 0) {
+                    html += `<div style="text-align:center; padding:16px; margin-top:12px; background:rgba(255,68,102,.06); border-radius:10px; border:1px solid rgba(255,68,102,.2);">
+                        <p style="color:var(--danger); font-size:14px; font-weight:600;">😔 Hiçbir alternatif bulunamadı.</p>
+                        <p style="color:var(--muted); font-size:13px; margin-top:4px;">Rezervasyonunuzu iptal edip iade alabilirsiniz.</p>
+                    </div>`;
+                    document.getElementById('altCancelBtn').style.display = 'inline-flex';
+                    document.getElementById('altCancelBtn').onclick = () => {
+                        closeAltModal();
+                        const resData = data;
+                        const [date, time] = [resData.date, resData.time_slot.split(' - ')[0]];
+                        cancelReservation(reservationId, date, time);
+                    };
+                }
+
+                document.getElementById('altContent').innerHTML = html;
+
+            } catch (err) {
+                document.getElementById('altContent').innerHTML = `<div class="alt-empty">❌ Hata: ${err.message}</div>`;
+            }
+        }
+
+        function renderAltCard(alt, reservationId) {
+            return `
+            <div class="alt-card">
+                <div class="alt-card-info">
+                    <div class="alt-card-name">
+                        ${alt.same_station ? '🔌' : '📍'} ${alt.station_name}
+                        ${alt.same_station ? '' : `<span style="font-size:12px; color:var(--accent);">(${alt.distance_km} km)</span>`}
+                    </div>
+                    <div class="alt-card-details">
+                        <span>⚡ ${alt.type} ${alt.power} kW</span>
+                        <span>🔌 ${alt.connector_type}</span>
+                        <span>💰 ${Number(alt.price_per_kwh).toFixed(2)} ₺/kWh</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="switchToAlternative(${reservationId}, ${alt.charger_id}, ${alt.station_id})">
+                    🔄 Taşı
+                </button>
+            </div>`;
+        }
+
+        async function switchToAlternative(reservationId, chargerId, stationId) {
+            try {
+                const res = await API.switchReservation(reservationId, chargerId, stationId);
+                closeAltModal();
+                App.showToast('✅ ' + (res.message || 'Rezervasyon başarıyla aktarıldı!'));
+                renderReservations();
+            } catch (err) {
+                App.showToast('❌ ' + err.message, 'error');
+            }
+        }
+
+        function closeAltModal() {
+            currentAltResId = null;
+            document.getElementById('altModal').classList.remove('show');
+        }
+
         // ── Modal dışına tıklayınca kapat ──
         document.getElementById('confirmModal').addEventListener('click', function(e) {
             if (e.target === this) closeConfirmModal();
+        });
+        document.getElementById('altModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAltModal();
         });
     </script>
 </body>

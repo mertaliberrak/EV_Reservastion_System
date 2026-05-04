@@ -167,6 +167,14 @@ const API = {
         return this.delete('/reservations/' + id);
     },
 
+    async getAlternatives(reservationId) {
+        return this.get('/reservations/' + reservationId + '/alternatives');
+    },
+
+    async switchReservation(reservationId, newChargerId, newStationId) {
+        return this.post('/reservations/' + reservationId + '/switch', { newChargerId, newStationId });
+    },
+
     async getChargerAvailability(chargerId, date) {
         const data = await this.get(`/reservations/charger/${chargerId}/availability?date=${date}`);
         return data.bookedSlots || [];

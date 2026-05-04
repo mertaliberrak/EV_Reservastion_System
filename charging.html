@@ -341,6 +341,20 @@
             const res = await Charging.startSession(Number(resId), startBat);
 
             if (!res.success) {
+                // Şarj cihazı müsait değilse alternatif öneri kontrolü
+                const reservation = activeReservations.find(r => String(r.id) === resId);
+                let altMsg = '';
+                try {
+                    const altData = await API.getAlternatives(Number(resId));
+                    if (altData.is_unavailable && altData.total_alternatives > 0) {
+                        altMsg = ` (${altData.total_alternatives} alternatif mevcut)`;
+                        App.showToast(`⚠️ ${res.message}${altMsg} — Panelden alternatif bulabilirsiniz.`, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '🔄 <a href="dashboard.html" style="color:inherit;">Panele Git — Alternatif Bul</a>';
+                        return;
+                    }
+                } catch (e) { /* ignore */ }
+
                 App.showToast(res.message, 'error');
                 btn.disabled = false;
                 btn.textContent = 'Şarjı Başlat';

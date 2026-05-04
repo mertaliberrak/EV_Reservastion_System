@@ -218,6 +218,252 @@ router.post('/', [
     res.status(201).json({ message: 'Rezervasyon oluşturuldu.', reservation });
 });
 
+// ── Mesafe Hesaplama (Haversine) ──
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// ── Zaman çakışma kontrolü yardımcısı ──
+function hasTimeConflict(startSlot, endSlot, date, chargerId) {
+    function timeToMins(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+    const newStartMins = timeToMins(startSlot);
+    let newEndMins = timeToMins(endSlot);
+    if (newEndMins <= newStartMins) newEndMins += 24 * 60;
+
+    const existing = db.prepare(
+        `SELECT start_slot, end_slot FROM reservations
+         WHERE charger_id = ? AND date = ? AND status = 'active'`
+    ).all(chargerId, date);
+
+    for (const r of existing) {
+        const bStart = timeToMins(r.start_slot);
+        let bEnd = timeToMins(r.end_slot);
+        if (bEnd <= bStart) bEnd += 24 * 60;
+        if (Math.max(bStart - 15, newStartMins) < Math.min(bEnd + 15, newEndMins)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ══════════════════════════════════════
+//  GET /api/reservations/:id/alternatives
+//  Şarj cihazı müsait değilse alternatifleri öner
+//  (aynı istasyon + yakın istasyonlar)
+// ══════════════════════════════════════
+router.get('/:id/alternatives', (req, res) => {
+    const reservation = db.prepare(
+        `SELECT r.*, s.name AS station_name, s.lat, s.lng,
+                c.connector_type AS charger_connector, c.status AS charger_status,
+                v.connector_type AS vehicle_connector, v.brand AS vehicle_brand, v.model AS vehicle_model
+         FROM reservations r
+         JOIN stations s ON r.station_id = s.id
+         JOIN chargers c ON r.charger_id = c.id
+         JOIN vehicles v ON r.vehicle_id = v.id
+         WHERE r.id = ? AND r.user_id = ?`
+    ).get(req.params.id, req.user.id);
+
+    if (!reservation) {
+        return res.status(404).json({ error: 'Rezervasyon bulunamadı.' });
+    }
+
+    const charger = db.prepare('SELECT * FROM chargers WHERE id = ?').get(reservation.charger_id);
+    const isUnavailable = charger.status !== 'available';
+
+    // ── 1. Aynı istasyondaki uyumlu alternatifler ──
+    const sameStationChargers = db.prepare(
+        `SELECT * FROM chargers
+         WHERE station_id = ? AND id != ? AND connector_type = ? AND status = 'available'`
+    ).all(reservation.station_id, reservation.charger_id, reservation.vehicle_connector);
+
+    const sameStationAlts = [];
+    for (const alt of sameStationChargers) {
+        if (!hasTimeConflict(reservation.start_slot, reservation.end_slot, reservation.date, alt.id)) {
+            sameStationAlts.push({
+                charger_id: alt.id,
+                station_id: reservation.station_id,
+                station_name: reservation.station_name,
+                type: alt.type,
+                power: alt.power,
+                connector_type: alt.connector_type,
+                price_per_kwh: alt.price_per_kwh,
+                distance_km: 0,
+                same_station: true,
+            });
+        }
+    }
+
+    // ── 2. Yakın istasyonlardaki uyumlu alternatifler ──
+    const nearbyAlts = [];
+    const allStations = db.prepare('SELECT * FROM stations WHERE id != ?').all(reservation.station_id);
+
+    for (const station of allStations) {
+        const dist = getDistanceKm(reservation.lat, reservation.lng, station.lat, station.lng);
+        if (dist > 15) continue; // Maks 15 km
+
+        const compatibleChargers = db.prepare(
+            `SELECT * FROM chargers
+             WHERE station_id = ? AND connector_type = ? AND status = 'available'`
+        ).all(station.id, reservation.vehicle_connector);
+
+        for (const alt of compatibleChargers) {
+            if (!hasTimeConflict(reservation.start_slot, reservation.end_slot, reservation.date, alt.id)) {
+                nearbyAlts.push({
+                    charger_id: alt.id,
+                    station_id: station.id,
+                    station_name: station.name,
+                    station_address: station.address,
+                    type: alt.type,
+                    power: alt.power,
+                    connector_type: alt.connector_type,
+                    price_per_kwh: alt.price_per_kwh,
+                    distance_km: Math.round(dist * 100) / 100,
+                    same_station: false,
+                    lat: station.lat,
+                    lng: station.lng,
+                });
+            }
+        }
+    }
+
+    // Yakın istasyonları mesafeye göre sırala
+    nearbyAlts.sort((a, b) => a.distance_km - b.distance_km);
+
+    res.json({
+        reservation_id: reservation.id,
+        current_charger_status: charger.status,
+        is_unavailable: isUnavailable,
+        vehicle: `${reservation.vehicle_brand} ${reservation.vehicle_model} (${reservation.vehicle_connector})`,
+        date: reservation.date,
+        time_slot: `${reservation.start_slot} - ${reservation.end_slot}`,
+        same_station_alternatives: sameStationAlts,
+        nearby_station_alternatives: nearbyAlts.slice(0, 10),
+        total_alternatives: sameStationAlts.length + Math.min(nearbyAlts.length, 10),
+    });
+});
+
+// ══════════════════════════════════════
+//  POST /api/reservations/:id/switch
+//  Rezervasyonu alternatif bir cihaza taşı
+// ══════════════════════════════════════
+router.post('/:id/switch', [
+    body('newChargerId').isInt().withMessage('Yeni şarj ünitesi ID gerekli.'),
+    body('newStationId').isInt().withMessage('Yeni istasyon ID gerekli.'),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array()[0].msg });
+    }
+
+    const { newChargerId, newStationId } = req.body;
+
+    // Mevcut rezervasyonu bul
+    const reservation = db.prepare(
+        `SELECT r.*, v.connector_type AS vehicle_connector, v.max_charge_rate,
+                c.power AS old_power, c.price_per_kwh AS old_price
+         FROM reservations r
+         JOIN vehicles v ON r.vehicle_id = v.id
+         JOIN chargers c ON r.charger_id = c.id
+         WHERE r.id = ? AND r.user_id = ? AND r.status = 'active'`
+    ).get(req.params.id, req.user.id);
+
+    if (!reservation) {
+        return res.status(404).json({ error: 'Aktif rezervasyon bulunamadı.' });
+    }
+
+    // Yeni cihaz kontrolü
+    const newCharger = db.prepare(
+        'SELECT * FROM chargers WHERE id = ? AND station_id = ?'
+    ).get(newChargerId, newStationId);
+
+    if (!newCharger) {
+        return res.status(404).json({ error: 'Alternatif şarj ünitesi bulunamadı.' });
+    }
+
+    if (newCharger.status !== 'available') {
+        return res.status(400).json({ error: 'Alternatif şarj ünitesi şu anda müsait değil.' });
+    }
+
+    // Uyumluluk kontrolü
+    if (newCharger.connector_type !== reservation.vehicle_connector) {
+        return res.status(400).json({ error: 'Alternatif şarj ünitesi aracınızla uyumlu değil.' });
+    }
+
+    // Zaman çakışması kontrolü
+    if (hasTimeConflict(reservation.start_slot, reservation.end_slot, reservation.date, newChargerId)) {
+        return res.status(409).json({ error: 'Alternatif ünite bu saat diliminde dolu.' });
+    }
+
+    // Fiyat farkı hesapla
+    function timeToMins(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+    let startMins = timeToMins(reservation.start_slot);
+    let endMins = timeToMins(reservation.end_slot);
+    if (endMins <= startMins) endMins += 24 * 60;
+    const durationHours = (endMins - startMins) / 60;
+
+    const oldPower = Math.min(reservation.old_power, reservation.max_charge_rate);
+    const newPower = Math.min(newCharger.power, reservation.max_charge_rate);
+    const oldCost = durationHours * oldPower * reservation.old_price;
+    const newCost = durationHours * newPower * newCharger.price_per_kwh;
+    const priceDiff = newCost - oldCost;
+
+    // Fiyat farkı artıyorsa bakiye kontrolü
+    if (priceDiff > 0) {
+        const userRow = db.prepare('SELECT balance FROM users WHERE id = ?').get(req.user.id);
+        if (!userRow || userRow.balance < priceDiff) {
+            return res.status(402).json({
+                error: `Bakiye yetersiz. Fiyat farkı: ${priceDiff.toFixed(2)} ₺, Bakiyeniz: ${userRow ? userRow.balance.toFixed(2) : '0.00'} ₺`
+            });
+        }
+    }
+
+    // Rezervasyonu güncelle (transaction)
+    try {
+        db.transaction(() => {
+            db.prepare(
+                `UPDATE reservations SET station_id = ?, charger_id = ? WHERE id = ?`
+            ).run(newStationId, newChargerId, req.params.id);
+
+            // Fiyat farkını uygula
+            if (priceDiff !== 0) {
+                db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(priceDiff, req.user.id);
+            }
+        })();
+    } catch (e) {
+        return res.status(500).json({ error: 'Rezervasyon aktarımı sırasında hata oluştu.' });
+    }
+
+    // Güncellenmiş rezervasyonu getir
+    const updated = db.prepare(
+        `SELECT r.*, s.name AS station_name, s.address AS station_address,
+                c.type AS charger_type, c.power AS charger_power, c.connector_type AS charger_connector
+         FROM reservations r
+         JOIN stations s ON r.station_id = s.id
+         JOIN chargers c ON r.charger_id = c.id
+         WHERE r.id = ?`
+    ).get(req.params.id);
+
+    res.json({
+        message: `Rezervasyon başarıyla aktarıldı! ${priceDiff > 0 ? `Fark: ${priceDiff.toFixed(2)} ₺ tahsil edildi.` : priceDiff < 0 ? `İade: ${Math.abs(priceDiff).toFixed(2)} ₺` : ''}`,
+        reservation: updated,
+        price_difference: priceDiff,
+    });
+});
+
 // ══════════════════════════════════════
 //  DELETE /api/reservations/:id
 // ══════════════════════════════════════

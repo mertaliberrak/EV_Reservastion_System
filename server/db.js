@@ -27,6 +27,7 @@ db.exec(`
         email       TEXT    UNIQUE NOT NULL,
         password_hash TEXT  NOT NULL,
         balance     REAL    DEFAULT 0.0,
+        is_admin    INTEGER DEFAULT 0,
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
