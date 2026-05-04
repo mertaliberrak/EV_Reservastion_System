@@ -79,6 +79,62 @@
             font-size: 13px;
         }
         .charger-actions { margin-top: 14px; }
+
+        /* ── Sorun Bildirim Modalı ── */
+        .report-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10, 14, 26, 0.92);
+            z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .report-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .report-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 90%; max-width: 480px;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .report-overlay.show .report-card { transform: scale(1); }
+
+        .report-card h3 {
+            font-size: 20px; font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .report-card .report-sub {
+            font-size: 14px; color: var(--muted); margin-bottom: 20px;
+        }
+
+        .report-card textarea {
+            width: 100%; min-height: 100px; resize: vertical;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text); font-family: inherit; font-size: 14px;
+            outline: none;
+            transition: border-color 0.25s;
+        }
+        .report-card textarea:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+        }
+
+        .report-actions {
+            display: flex; gap: 12px; margin-top: 20px;
+        }
+        .report-actions .btn { flex: 1; height: 44px; }
+
+        .btn-warning {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: var(--warning);
+        }
     </style>
 </head>
 <body>
@@ -103,6 +159,37 @@
             </div>
             <div class="charger-grid" id="chargerGrid">
                 <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sorun Bildirim Modalı -->
+    <div class="report-overlay" id="reportModal">
+        <div class="report-card">
+            <h3>⚠️ Sorun Bildir</h3>
+            <p class="report-sub" id="reportStationName">Bu istasyon hakkında bir sorun bildirin.</p>
+
+            <div class="form-group">
+                <label>Sorun Kategorisi</label>
+                <select class="form-control" id="reportCategory" required>
+                    <option value="">Kategori seçin...</option>
+                    <option value="broken_charger">🔧 Arızalı Şarj Ünitesi</option>
+                    <option value="payment_issue">💳 Ödeme Sorunu</option>
+                    <option value="dirty_station">🧹 Kirli / Bakımsız İstasyon</option>
+                    <option value="access_problem">🚧 Erişim Sorunu</option>
+                    <option value="wrong_info">ℹ️ Yanlış Bilgi (Fiyat, Konum vb.)</option>
+                    <option value="safety_concern">🛑 Güvenlik Endişesi</option>
+                    <option value="other">📝 Diğer</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Açıklama (en az 10 karakter)</label>
+                <textarea id="reportDescription" placeholder="Sorunu detaylı şekilde açıklayın..."></textarea>
+            </div>
+
+            <div class="report-actions">
+                <button class="btn btn-secondary" onclick="closeReportModal()">İptal</button>
+                <button class="btn btn-primary" id="reportSubmitBtn" onclick="submitReport()">📨 Gönder</button>
             </div>
         </div>
     </div>
@@ -178,6 +265,7 @@
                     </button>
                     <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}"
                        target="_blank" class="btn btn-secondary">🧭 Yol Tarifi</a>
+                    <button class="btn btn-warning btn-sm" onclick="openReportModal()">⚠️ Sorun Bildir</button>
                     <a href="map.html" class="btn btn-secondary">← Haritaya Dön</a>
                 </div>
             `;
@@ -269,6 +357,49 @@
         }
 
         loadPage();
+
+        // ── Sorun Bildirim Fonksiyonları ──
+        function openReportModal() {
+            document.getElementById('reportStationName').textContent =
+                `"${station.name}" hakkında bir sorun bildirin.`;
+            document.getElementById('reportCategory').value = '';
+            document.getElementById('reportDescription').value = '';
+            document.getElementById('reportSubmitBtn').disabled = false;
+            document.getElementById('reportSubmitBtn').textContent = '📨 Gönder';
+            document.getElementById('reportModal').classList.add('show');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.remove('show');
+        }
+
+        async function submitReport() {
+            const category = document.getElementById('reportCategory').value;
+            const description = document.getElementById('reportDescription').value.trim();
+            const btn = document.getElementById('reportSubmitBtn');
+
+            if (!category) {
+                App.showToast('Lütfen bir kategori seçin.', 'error');
+                return;
+            }
+            if (description.length < 10) {
+                App.showToast('Açıklama en az 10 karakter olmalıdır.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Gönderiliyor...';
+
+            try {
+                const res = await API.submitReport(station.id, category, description);
+                App.showToast('✅ ' + res.message);
+                closeReportModal();
+            } catch (err) {
+                App.showToast('❌ ' + err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = '📨 Gönder';
+            }
+        }
     </script>
 </body>
 </html>

@@ -28,6 +28,7 @@ db.exec(`
         password_hash TEXT  NOT NULL,
         balance     REAL    DEFAULT 0.0,
         is_admin    INTEGER DEFAULT 0,
+        is_operator INTEGER DEFAULT 0,
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -131,14 +132,34 @@ db.exec(`
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, station_id)
     );
+
+    -- İstasyon Sorun Bildirimleri
+    CREATE TABLE IF NOT EXISTS station_reports (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        station_id  INTEGER NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+        category    TEXT    NOT NULL,
+        description TEXT    NOT NULL,
+        status      TEXT    DEFAULT 'open',
+        admin_note  TEXT,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // is_admin sütunu daha önceden olmayan veritabanlarına eklemek için migration
 try {
     const tableInfo = db.pragma('table_info(users)');
+    
+    // Admin column migration
     const hasAdminColumn = tableInfo.some(column => column.name === 'is_admin');
     if (!hasAdminColumn) {
         db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0;');
+    }
+
+    // Operator column migration
+    const hasOperatorColumn = tableInfo.some(column => column.name === 'is_operator');
+    if (!hasOperatorColumn) {
+        db.exec('ALTER TABLE users ADD COLUMN is_operator INTEGER DEFAULT 0;');
     }
 } catch (err) {
     console.error('Migration error for users table:', err);

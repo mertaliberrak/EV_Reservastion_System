@@ -235,5 +235,30 @@ const API = {
 
     async updateUserRole(id, is_admin) {
         return this.request('PUT', `/admin/users/${id}/role`, { is_admin });
+    },
+
+    async updateUserOperatorRole(id, is_operator) {
+        return this.request('PUT', `/admin/users/${id}/role`, { is_operator });
+    },
+
+    // ══════════════════════════════════════
+    //  REPORTS (İstasyon Sorun Bildirimleri)
+    // ══════════════════════════════════════
+    async submitReport(stationId, category, description) {
+        return this.post('/reports', { stationId, category, description });
+    },
+
+    async getMyReports() {
+        const data = await this.get('/reports');
+        return data.reports || [];
+    },
+
+    async getAdminReports() {
+        const data = await this.get('/reports/admin');
+        return data.reports || [];
+    },
+
+    async updateReportStatus(id, status, adminNote) {
+        return this.patch(`/reports/${id}`, { status, adminNote });
     }
 };

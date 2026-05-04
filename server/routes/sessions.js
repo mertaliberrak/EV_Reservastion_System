@@ -82,6 +82,10 @@ router.post('/', [
     // Şarj ünitesinin fiyatını al
     const charger = db.prepare('SELECT * FROM chargers WHERE id = ?').get(reservation.charger_id);
 
+    // Araç ve istasyon bilgilerini al (frontend izleme için)
+    const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(reservation.vehicle_id);
+    const station = db.prepare('SELECT * FROM stations WHERE id = ?').get(reservation.station_id);
+
     // Oturumu oluştur
     const result = db.prepare(
         `INSERT INTO sessions (user_id, reservation_id, start_time, price_per_kwh, battery_start, status)
@@ -95,6 +99,14 @@ router.post('/', [
     db.prepare("UPDATE chargers SET status = 'occupied' WHERE id = ?").run(reservation.charger_id);
 
     const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(result.lastInsertRowid);
+
+    // Frontend'e araç, istasyon ve şarj ünitesi bilgilerini de gönder
+    session.vehicle_name = vehicle ? `${vehicle.brand} ${vehicle.model}` : '';
+    session.battery_capacity = vehicle ? vehicle.battery_capacity : 60;
+    session.max_charge_rate = vehicle ? vehicle.max_charge_rate : 50;
+    session.charger_power = charger.power;
+    session.connector_type = charger.connector_type;
+    session.station_name = station ? station.name : '';
 
     res.status(201).json({ message: 'Şarj oturumu başlatıldı.', session });
 });

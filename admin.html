@@ -61,19 +61,24 @@
         }
         .badge.admin { background: #ff4757; color: white; }
         .badge.user { background: #2ed573; color: white; }
+        .badge.open { background: rgba(255,215,0,0.15); color: var(--warning); border: 1px solid rgba(255,215,0,0.3); }
+        .badge.in_progress { background: rgba(0,168,232,0.15); color: var(--accent); border: 1px solid rgba(0,168,232,0.3); }
+        .badge.resolved { background: rgba(0,229,160,0.15); color: var(--green); border: 1px solid rgba(0,229,160,0.3); }
+        .badge.dismissed { background: rgba(122,138,171,0.15); color: var(--muted); border: 1px solid rgba(122,138,171,0.3); }
     </style>
 </head>
 <body>
     <header class="navbar" id="navbar"></header>
 
     <div class="container">
-        <h1>🛡️ Admin Paneli</h1>
-        <p style="color: var(--muted); margin-bottom: 24px;">Kullanıcıları yönetin ve sistem etkinliklerini (Audit Logs) inceleyin.</p>
+        <h1 id="adminTitle">🛡️ Yönetim Paneli</h1>
+        <p id="adminDesc" style="color: var(--muted); margin-bottom: 24px;">Kullanıcıları yönetin ve sistem etkinliklerini inceleyin.</p>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="Admin.switchTab('logs')">📋 Denetim Kayıtları (Audit Logs)</button>
-            <button class="tab-btn" onclick="Admin.switchTab('users')">👥 Kullanıcı Yönetimi</button>
-            <button class="tab-btn" onclick="Admin.switchTab('stations')">⚡ İstasyon Yönetimi</button>
+            <button class="tab-btn active" id="btn-tab-logs" onclick="Admin.switchTab('logs')">📋 Denetim Kayıtları</button>
+            <button class="tab-btn" id="btn-tab-users" onclick="Admin.switchTab('users')">👥 Kullanıcılar</button>
+            <button class="tab-btn" id="btn-tab-stations" onclick="Admin.switchTab('stations')">⚡ İstasyonlar</button>
+            <button class="tab-btn" id="btn-tab-reports" onclick="Admin.switchTab('reports')">⚠️ Bildirimler</button>
         </div>
 
         <!-- Logs Tab -->
@@ -146,6 +151,32 @@
                     </thead>
                     <tbody id="stationsTableBody">
                         <tr><td colspan="4" style="text-align: center;">Yükleniyor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="tab-reports" class="tab-content card">
+            <div class="card-header">
+                <h2>İstasyon Sorun Bildirimleri</h2>
+                <button class="btn btn-secondary btn-sm" onclick="Admin.loadReports()">Yenile</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>İstasyon</th>
+                            <th>Kullanıcı</th>
+                            <th>Kategori</th>
+                            <th>Açıklama</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <tr><td colspan="7" style="text-align: center;">Yükleniyor...</td></tr>
                     </tbody>
                 </table>
             </div>

@@ -67,6 +67,125 @@
             font-weight: 600;
             text-align: center;
         }
+
+        /* ── Rezervasyon Onay Modalı ── */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 26, 0.92);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .confirm-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .confirm-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            width: 90%;
+            max-width: 440px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .confirm-overlay.show .confirm-card {
+            transform: scale(1);
+        }
+
+        .confirm-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, var(--green2), var(--green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 16px;
+            animation: confirmPop 0.5s ease 0.2s both;
+        }
+        @keyframes confirmPop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .confirm-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .confirm-subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .confirm-details {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .confirm-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .confirm-detail-row:last-child {
+            border-bottom: none;
+        }
+        .confirm-detail-label {
+            color: var(--muted);
+        }
+        .confirm-detail-val {
+            font-weight: 600;
+            color: var(--text);
+            text-align: right;
+            max-width: 55%;
+        }
+
+        .confirm-cost-box {
+            background: rgba(0, 229, 160, 0.08);
+            border: 1px solid rgba(0, 229, 160, 0.25);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+        .confirm-cost-label {
+            font-size: 12px;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .confirm-cost-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .confirm-actions .btn {
+            flex: 1;
+            height: 46px;
+        }
     </style>
 </head>
 
@@ -165,6 +284,52 @@
                 Rezervasyonu Onayla
             </button>
         </form>
+    </div>
+
+    <!-- Rezervasyon Onay Modalı -->
+    <div class="confirm-overlay" id="confirmModal">
+        <div class="confirm-card">
+            <div class="confirm-icon">✓</div>
+            <div class="confirm-title">Rezervasyon Onaylandı!</div>
+            <div class="confirm-subtitle">Rezervasyonunuz başarıyla oluşturuldu.</div>
+
+            <div class="confirm-details">
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Rezervasyon No</span>
+                    <span class="confirm-detail-val" id="cfmId">-</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">İstasyon</span>
+                    <span class="confirm-detail-val" id="cfmStation">-</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Araç</span>
+                    <span class="confirm-detail-val" id="cfmVehicle">-</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Şarj Ünitesi</span>
+                    <span class="confirm-detail-val" id="cfmCharger">-</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Tarih</span>
+                    <span class="confirm-detail-val" id="cfmDate">-</span>
+                </div>
+                <div class="confirm-detail-row">
+                    <span class="confirm-detail-label">Saat Aralığı</span>
+                    <span class="confirm-detail-val" id="cfmTime">-</span>
+                </div>
+            </div>
+
+            <div class="confirm-cost-box">
+                <div class="confirm-cost-label">Tahsil Edilen Tutar</div>
+                <div class="confirm-cost-amount" id="cfmCost">0.00 ₺</div>
+            </div>
+
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">🏠 Panele Git</button>
+                <button class="btn btn-primary" id="cfmChargeBtn" onclick="">⚡ Şarj Başlat</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
@@ -484,10 +649,7 @@
                 });
 
                 if (res.success) {
-                    App.showToast('✅ Rezervasyon başarıyla oluşturuldu!');
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
+                    showConfirmation(res.reservation, startSlot, endSlot, date);
                 } else {
                     App.showToast('❌ Hata: ' + res.message, 'error');
                     submitBtn.disabled = false;
@@ -498,6 +660,38 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Rezervasyonu Onayla';
             }
+        }
+
+        function showConfirmation(reservation, startSlot, endSlot, date) {
+            // Modal alanlarını doldur
+            document.getElementById('cfmId').textContent = '#' + reservation.id;
+            document.getElementById('cfmStation').textContent = reservation.station_name || '-';
+            document.getElementById('cfmVehicle').textContent =
+                (reservation.vehicle_brand && reservation.vehicle_model)
+                    ? `${reservation.vehicle_brand} ${reservation.vehicle_model}`
+                    : '-';
+            document.getElementById('cfmCharger').textContent =
+                (reservation.charger_type && reservation.charger_power)
+                    ? `${reservation.charger_type} ${reservation.charger_power}kW (${reservation.charger_connector || ''})`
+                    : '-';
+            document.getElementById('cfmDate').textContent = date;
+            document.getElementById('cfmTime').textContent = `${startSlot} — ${endSlot}`;
+
+            // Tutar hesabı
+            const costAmount = document.getElementById('costAmount').textContent;
+            document.getElementById('cfmCost').textContent = costAmount + ' ₺';
+
+            // Şarj Başlat butonu — rezervasyon ID'si ile charging.html'e yönlendir
+            document.getElementById('cfmChargeBtn').onclick = function () {
+                window.location.href = `charging.html?rid=${reservation.id}`;
+            };
+
+            // Modalı göster
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('show');
+
+            // Toast da göster
+            App.showToast('✅ Rezervasyon başarıyla onaylandı!');
         }
     </script>
 </body>

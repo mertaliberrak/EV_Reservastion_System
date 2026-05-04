@@ -37,6 +37,8 @@ const App = {
         if (!nav) return;
 
         const isAdmin = this._cachedUser && this._cachedUser.is_admin === 1;
+        const isOperator = this._cachedUser && this._cachedUser.is_operator === 1;
+        const showAdminPanel = isAdmin || isOperator;
 
         nav.innerHTML = `
             <a href="dashboard.html" class="nav-logo">
@@ -51,7 +53,7 @@ const App = {
                 <a href="reservation.html" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Rezervasyon</span></a>
                 <a href="charging.html" ${activePage === 'charging' ? 'class="active"' : ''}>⚡ <span>Şarj</span></a>
                 <a href="profile.html" ${activePage === 'profile' ? 'class="active"' : ''}>👤 <span>Profil</span></a>
-                ${isAdmin ? `<a href="admin.html" ${activePage === 'admin' ? 'class="active"' : ''}>🛡️ <span>Admin</span></a>` : ''}
+                ${showAdminPanel ? `<a href="admin.html" ${activePage === 'admin' ? 'class="active"' : ''}>🛡️ <span>Yönetim</span></a>` : ''}
                 <button class="btn-logout" onclick="App.logout()">🚪 Çıkış</button>
             </nav>
         `;

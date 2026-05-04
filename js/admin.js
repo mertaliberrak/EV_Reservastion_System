@@ -11,16 +11,24 @@ const Admin = {
         this._currentUser = await App.requireAuth();
         if (!this._currentUser) return;
 
-        if (this._currentUser.is_admin !== 1) {
+        if (this._currentUser.is_admin !== 1 && this._currentUser.is_operator !== 1) {
             App.showToast('Bu sayfayı görüntüleme yetkiniz yok.', 'error');
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
             return;
         }
 
         App.renderNavbar('admin');
-        
-        // İlk olarak Logları yükle
-        this.loadLogs();
+
+        // Operatörler için sekmeleri gizle
+        if (this._currentUser.is_admin !== 1 && this._currentUser.is_operator === 1) {
+            document.getElementById('btn-tab-logs').style.display = 'none';
+            document.getElementById('btn-tab-users').style.display = 'none';
+            document.getElementById('adminDesc').textContent = 'İstasyonları yönetin ve sorun bildirimlerini inceleyin.';
+            this.switchTab('stations');
+        } else {
+            // Adminler için varsayılan Loglar
+            this.loadLogs();
+        }
 
         // Modal onay butonu
         document.getElementById('confirmModalBtn').addEventListener('click', async () => {
@@ -56,6 +64,8 @@ const Admin = {
             this.loadUsers();
         } else if (tabName === 'stations') {
             this.loadStations();
+        } else if (tabName === 'reports') {
+            this.loadReports();
         }
     },
 
@@ -116,15 +126,28 @@ const Admin = {
         }
 
         tbody.innerHTML = users.map(user => {
-            const roleBadge = user.is_admin === 1 
-                ? '<span class="badge admin">Admin</span>' 
-                : '<span class="badge user">Kullanıcı</span>';
+            let roleBadge = '<span class="badge user">Kullanıcı</span>';
+            if (user.is_admin === 1) {
+                roleBadge = '<span class="badge admin">Admin</span>';
+            } else if (user.is_operator === 1) {
+                roleBadge = '<span class="badge" style="background:#f39c12; color:white;">Operatör</span>';
+            }
             
-            const actionBtn = user.is_admin === 1
-                ? `<button class="btn btn-secondary btn-sm" onclick="Admin.promptRoleChange(${user.id}, 0, '${user.name}')">Yetkiyi Al</button>`
-                : `<button class="btn btn-primary btn-sm" onclick="Admin.promptRoleChange(${user.id}, 1, '${user.name}')">Admin Yap</button>`;
+            let actionBtns = '';
+            if (user.is_admin === 1) {
+                actionBtns = `<button class="btn btn-secondary btn-sm" onclick="Admin.promptRoleChange(${user.id}, 0, '${user.name}')">Adminliği Al</button>`;
+            } else if (user.is_operator === 1) {
+                actionBtns = `
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.promptOperatorRoleChange(${user.id}, 0, '${user.name}')">Operatörlüğü Al</button>
+                `;
+            } else {
+                actionBtns = `
+                    <button class="btn btn-secondary btn-sm" style="margin-right:4px;" onclick="Admin.promptOperatorRoleChange(${user.id}, 1, '${user.name}')">Operatör Yap</button>
+                    <button class="btn btn-primary btn-sm" onclick="Admin.promptRoleChange(${user.id}, 1, '${user.name}')">Admin Yap</button>
+                `;
+            }
 
-            // Kendisini adminlikten düşürmesini engelle
+            // Kendisini düşürmesini engelle
             const isSelf = user.id === this._currentUser.id;
 
             return `
@@ -135,7 +158,7 @@ const Admin = {
                     <td>${roleBadge}</td>
                     <td>${App.formatCurrency(user.balance)}</td>
                     <td>
-                        ${isSelf ? '<span style="color:var(--muted); font-size:12px;">(Siz)</span>' : actionBtn}
+                        ${isSelf ? '<span style="color:var(--muted); font-size:12px;">(Siz)</span>' : actionBtns}
                     </td>
                 </tr>
             `;
@@ -163,6 +186,23 @@ const Admin = {
         this._confirmActionCb = async () => {
             try {
                 await API.updateUserRole(userId, newRole);
+                App.showToast('Rol başarıyla güncellendi.');
+                this.loadUsers();
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            }
+        };
+        document.getElementById('confirmModal').classList.add('show');
+    },
+
+    promptOperatorRoleChange(userId, newRole, userName) {
+        const actionText = newRole === 1 ? 'Operatör yapmak' : 'Operatör yetkisini almak';
+        const message = `<b>${userName}</b> adlı kullanıcının rolünü <b>${actionText}</b> istediğinize emin misiniz?`;
+        
+        document.getElementById('confirmModalText').innerHTML = message;
+        this._confirmActionCb = async () => {
+            try {
+                await API.updateUserOperatorRole(userId, newRole);
                 App.showToast('Rol başarıyla güncellendi.');
                 this.loadUsers();
             } catch (err) {
@@ -239,6 +279,79 @@ const Admin = {
     closeConfirmModal() {
         this._confirmActionCb = null;
         document.getElementById('confirmModal').classList.remove('show');
+    },
+
+    // ══ Reports (Bildirimler) ══
+    async loadReports() {
+        const tbody = document.getElementById('reportsTableBody');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Yükleniyor...</td></tr>';
+
+        const categoryLabels = {
+            broken_charger: '🔧 Arızalı Ünite',
+            payment_issue: '💳 Ödeme Sorunu',
+            dirty_station: '🧹 Kirli İstasyon',
+            access_problem: '🚧 Erişim Sorunu',
+            wrong_info: 'ℹ️ Yanlış Bilgi',
+            safety_concern: '🛑 Güvenlik',
+            other: '📝 Diğer',
+        };
+        const statusLabels = {
+            open: 'Açık',
+            in_progress: 'İşleniyor',
+            resolved: 'Çözüldü',
+            dismissed: 'Reddedildi',
+        };
+
+        try {
+            const reports = await API.getAdminReports();
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Henüz bildirim yok.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reports.map(r => {
+                const date = new Date(r.created_at).toLocaleString('tr-TR');
+                const catLabel = categoryLabels[r.category] || r.category;
+                const stLabel = statusLabels[r.status] || r.status;
+                const desc = r.description.length > 80 ? r.description.substring(0, 80) + '...' : r.description;
+
+                let actions = '';
+                if (r.status === 'open') {
+                    actions = `
+                        <button class="btn btn-primary btn-sm" style="margin-right:4px;" onclick="Admin.updateReportStatus(${r.id}, 'resolved')">Çözüldü</button>
+                        <button class="btn btn-secondary btn-sm" onclick="Admin.updateReportStatus(${r.id}, 'dismissed')">Reddet</button>
+                    `;
+                } else if (r.status === 'in_progress') {
+                    actions = `<button class="btn btn-primary btn-sm" onclick="Admin.updateReportStatus(${r.id}, 'resolved')">Çözüldü</button>`;
+                } else {
+                    actions = `<span style="font-size:12px;color:var(--muted);">—</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td style="white-space:nowrap;">${date}</td>
+                        <td>${r.station_name}</td>
+                        <td>${r.user_name}<br><span style="font-size:12px;color:var(--muted);">${r.user_email}</span></td>
+                        <td>${catLabel}</td>
+                        <td style="max-width:200px;" title="${r.description}">${desc}</td>
+                        <td><span class="badge ${r.status}">${stLabel}</span></td>
+                        <td>${actions}</td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Hata: ' + err.message + '</td></tr>';
+        }
+    },
+
+    async updateReportStatus(reportId, status) {
+        try {
+            await API.updateReportStatus(reportId, status);
+            App.showToast('✅ Bildirim durumu güncellendi.');
+            this.loadReports();
+        } catch (err) {
+            App.showToast('Hata: ' + err.message, 'error');
+        }
     }
 };
 
