@@ -780,6 +780,7 @@
         let connected = false;
         let charging = false;
         let toastTimer = null;
+        let loggedInUserName = 'Kullanıcı'; // Login sonucu kaydedilir
 
         // ── Mark plug as locked/unlocked based on fields ───
         function updatePlugLock() {
@@ -831,6 +832,10 @@
                 shakeInput(emailInput); shakeInput(passInput);
                 showToast('❌ ' + result.message);
                 return false;
+            }
+            // Login yanıtından kullanıcı adını sakla (showSuccess'ta tekrar API çağrısı yapmamak için)
+            if (result.user && result.user.name) {
+                loggedInUserName = result.user.name;
             }
             return true;
         }
@@ -926,13 +931,8 @@
         }
 
         // ── Show success overlay & redirect ─────────────────
-        async function showSuccess() {
-            let userName = 'Kullanıcı';
-            try {
-                const data = await API.getMe();
-                if (data && data.user) userName = data.user.name;
-            } catch (e) { }
-            document.querySelector('.success-sub').textContent = 'Hoş geldiniz, ' + userName + '!';
+        function showSuccess() {
+            document.querySelector('.success-sub').textContent = 'Hoş geldiniz, ' + loggedInUserName + '!';
             successOverlay.classList.add('show');
             setTimeout(() => {
                 hint.textContent = '✅ Giriş başarılı!';

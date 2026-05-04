@@ -45,6 +45,7 @@ const App = {
                 <a href="dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>🏠 <span>Panel</span></a>
                 <a href="wallet.html" ${activePage === 'wallet' ? 'class="active"' : ''}>💳 <span>Cüzdan</span></a>
                 <a href="map.html" ${activePage === 'map' ? 'class="active"' : ''}>🗺️ <span>Harita</span></a>
+                <a href="recommend.html" ${activePage === 'recommend' ? 'class="active"' : ''}>🎯 <span>Tavsiye</span></a>
                 <a href="reservation.html" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Rezervasyon</span></a>
                 <a href="charging.html" ${activePage === 'charging' ? 'class="active"' : ''}>⚡ <span>Şarj</span></a>
                 <a href="profile.html" ${activePage === 'profile' ? 'class="active"' : ''}>👤 <span>Profil</span></a>

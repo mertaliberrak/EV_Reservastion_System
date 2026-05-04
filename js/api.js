@@ -38,10 +38,12 @@ const API = {
             const data = await response.json();
 
             if (!response.ok) {
-                // Token geçersizse login'e yönlendir
+                // Token geçersizse login'e yönlendir (login sayfasındayken yönlendirme yapma)
                 if (response.status === 401 && !path.includes('/auth/login')) {
                     this.clearToken();
-                    window.location.href = 'login.html';
+                    if (!window.location.pathname.includes('login.html')) {
+                        window.location.href = 'login.html';
+                    }
                     return;
                 }
                 throw new Error(data.error || 'Bir hata oluştu.');
@@ -140,6 +142,13 @@ const API = {
     async getStation(id) {
         const data = await this.get('/stations/' + id);
         return data.station || null;
+    },
+
+    async getRecommendations({ lat, lng, vehicle_id, max_distance_km } = {}) {
+        let query = `/stations/recommend?lat=${lat}&lng=${lng}`;
+        if (vehicle_id) query += `&vehicle_id=${vehicle_id}`;
+        if (max_distance_km) query += `&max_distance_km=${max_distance_km}`;
+        return this.get(query);
     },
 
     // ══════════════════════════════════════
