@@ -237,10 +237,6 @@ const API = {
         return this.request('PUT', `/admin/users/${id}/role`, { is_admin });
     },
 
-    async updateUserOperatorRole(id, is_operator) {
-        return this.request('PUT', `/admin/users/${id}/role`, { is_operator });
-    },
-
     // ══════════════════════════════════════
     //  REPORTS (İstasyon Sorun Bildirimleri)
     // ══════════════════════════════════════
@@ -260,5 +256,33 @@ const API = {
 
     async updateReportStatus(id, status, adminNote) {
         return this.patch(`/reports/${id}`, { status, adminNote });
+    },
+
+    // ══════════════════════════════════════
+    //  DESTEK TALEPLERİ (SUPPORT TICKETS)
+    // ══════════════════════════════════════
+    async createSupportTicket(subject, category, description, related_id) {
+        return this.post('/support', { subject, category, description, related_id });
+    },
+
+    async getMySupportTickets() {
+        const data = await this.get('/support');
+        return data.tickets || [];
+    },
+
+    async getAdminSupportTickets() {
+        const data = await this.get('/support/admin');
+        return data.tickets || [];
+    },
+
+    async updateSupportTicketStatus(id, status, admin_note) {
+        return this.patch(`/support/${id}`, { status, admin_note });
+    },
+
+    // ══════════════════════════════════════
+    //  KULLANICI ROLLERİ (USER ROLES)
+    // ══════════════════════════════════════
+    async updateUserOperatorRole(id, is_operator) {
+        return this.request('PUT', `/admin/users/${id}/role`, { is_operator });
     }
 };

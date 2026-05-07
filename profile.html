@@ -171,6 +171,7 @@
                 <button onclick="switchTab('password')"><span>🔐</span> Şifre Değiştir</button>
                 <button onclick="switchTab('vehicles')"><span>🚗</span> Araçlarım</button>
                 <button onclick="switchTab('cards')"><span>💳</span> Kartlarım</button>
+                <button onclick="switchTab('support')"><span>🎧</span> Destek Talepleri</button>
             </nav>
 
             <!-- İçerik Alanı -->
@@ -235,6 +236,17 @@
                         <button class="btn btn-primary btn-sm" onclick="openAddCardModal()">+ Yeni Kart Ekle</button>
                     </div>
                     <div id="cardsList">
+                        <!-- JS ile yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- SEKME 5: DESTEK TALEPLERİ -->
+                <div id="tab-support" class="tab-pane card">
+                    <div class="card-header">
+                        <h2>Destek Taleplerim</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openAddSupportModal()">+ Yeni Talep</button>
+                    </div>
+                    <div id="supportList">
                         <!-- JS ile yüklenecek -->
                     </div>
                 </div>
@@ -334,6 +346,41 @@
         </div>
     </div>
 
+    <!-- Destek Talebi Modalı -->
+    <div class="modal-overlay" id="addSupportModal">
+        <div class="modal" style="max-width: 500px;">
+            <h3>🎧 Yeni Destek Talebi</h3>
+            <form id="addSupportForm" onsubmit="handleAddSupport(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="sCategory">Kategori</label>
+                    <select class="form-control" id="sCategory" required>
+                        <option value="">Seçiniz</option>
+                        <option value="reservation">Rezervasyon İşlemleri</option>
+                        <option value="payment">Ödeme ve Cüzdan</option>
+                        <option value="charging">Şarj İşlemleri</option>
+                        <option value="station">İstasyon Sorunları</option>
+                        <option value="other">Diğer</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="sSubject">Konu Başlığı</label>
+                    <input type="text" class="form-control" id="sSubject" required placeholder="Kısaca sorununuzu belirtin" maxlength="100" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="sDescription">Detaylı Açıklama</label>
+                    <textarea class="form-control" id="sDescription" required placeholder="Sorununuzu detaylı bir şekilde açıklayın..." rows="4"></textarea>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddSupportModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary" id="addSupportBtn">Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Onay Modalı -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal" style="width: min(400px, 90vw); text-align: center;">
@@ -358,6 +405,7 @@
             await loadProfileData();
             await loadCards();
             await loadVehicles();
+            await loadSupportTickets();
 
             // URL hash'ine göre sekme aç (örn: profile.html#vehicles)
             const hash = window.location.hash.replace('#', '');
@@ -367,7 +415,7 @@
                 document.getElementById('tab-' + hash).classList.add('active');
                 // Nav butonunu da aktif yap
                 const navBtns = document.querySelectorAll('.profile-nav button');
-                const tabNames = ['info', 'password', 'vehicles', 'cards'];
+                const tabNames = ['info', 'password', 'vehicles', 'cards', 'support'];
                 const idx = tabNames.indexOf(hash);
                 if (idx >= 0 && navBtns[idx]) navBtns[idx].classList.add('active');
             }
@@ -661,12 +709,107 @@
             }
         });
 
+        // ── Destek Talepleri (Support Tickets) ──
+        async function loadSupportTickets() {
+            try {
+                const tickets = await API.getMySupportTickets();
+                const container = document.getElementById('supportList');
+
+                if (tickets.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state-box">
+                            <div style="font-size:32px; margin-bottom:8px;">🎧</div>
+                            Henüz açılmış bir destek talebiniz bulunmuyor.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = tickets.map(t => {
+                    let statusBadge = '';
+                    switch(t.status) {
+                        case 'open': statusBadge = '<span class="badge user" style="background:rgba(255,193,7,.1); color:#ffc107; border:1px solid rgba(255,193,7,.3);">Açık</span>'; break;
+                        case 'in_progress': statusBadge = '<span class="badge user" style="background:rgba(0,168,232,.1); color:var(--accent); border:1px solid rgba(0,168,232,.3);">İnceleniyor</span>'; break;
+                        case 'resolved': statusBadge = '<span class="badge user" style="background:rgba(0,229,160,.1); color:var(--green); border:1px solid rgba(0,229,160,.3);">Çözüldü</span>'; break;
+                        case 'closed': statusBadge = '<span class="badge user" style="background:rgba(122,138,171,.1); color:var(--muted); border:1px solid rgba(122,138,171,.3);">Kapalı</span>'; break;
+                    }
+
+                    const categoryNames = {
+                        'reservation': 'Rezervasyon',
+                        'payment': 'Ödeme/Cüzdan',
+                        'charging': 'Şarj İşlemi',
+                        'station': 'İstasyon',
+                        'other': 'Diğer'
+                    };
+
+                    return `
+                        <div style="background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                                <div style="font-weight:600; font-size:15px;">${t.subject}</div>
+                                <div>${statusBadge}</div>
+                            </div>
+                            <div style="font-size:12px; color:var(--muted); margin-bottom: 12px; display:flex; gap:12px;">
+                                <span>Kategori: ${categoryNames[t.category] || t.category}</span>
+                                <span>Tarih: ${App.formatDate(t.created_at)}</span>
+                            </div>
+                            <div style="font-size:14px; background:rgba(0,0,0,0.1); padding:10px; border-radius:6px; margin-bottom:12px;">
+                                ${t.description}
+                            </div>
+                            ${t.admin_note ? `
+                                <div style="font-size:13px; background:rgba(0,229,160,0.05); border-left:3px solid var(--green); padding:10px; border-radius:4px;">
+                                    <strong>Destek Ekibi:</strong><br/>
+                                    ${t.admin_note}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                App.showToast('Destek talepleri yüklenemedi.', 'error');
+            }
+        }
+
+        function openAddSupportModal() {
+            document.getElementById('addSupportModal').classList.add('show');
+        }
+
+        function closeAddSupportModal() {
+            document.getElementById('addSupportModal').classList.remove('show');
+            document.getElementById('addSupportForm').reset();
+        }
+
+        async function handleAddSupport(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addSupportBtn');
+            const category = document.getElementById('sCategory').value;
+            const subject = document.getElementById('sSubject').value;
+            const description = document.getElementById('sDescription').value;
+
+            btn.disabled = true;
+            btn.textContent = 'Gönderiliyor...';
+
+            try {
+                await API.createSupportTicket(subject, category, description, null);
+                App.showToast('Destek talebiniz başarıyla oluşturuldu.');
+                closeAddSupportModal();
+                loadSupportTickets();
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Gönder';
+            }
+        }
+
         // Overlay tıklamaları
         document.getElementById('addVehicleModal').addEventListener('click', function(e) {
             if (e.target === this) closeAddVehicleModal();
         });
         document.getElementById('addCardModal').addEventListener('click', function(e) {
             if (e.target === this) closeAddCardModal();
+        });
+        document.getElementById('addSupportModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAddSupportModal();
         });
         document.getElementById('confirmModal').addEventListener('click', function(e) {
             if (e.target === this) closeConfirmModal();

@@ -144,6 +144,19 @@ db.exec(`
         admin_note  TEXT,
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Destek Talepleri (Genel)
+    CREATE TABLE IF NOT EXISTS support_tickets (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        subject     TEXT    NOT NULL,
+        category    TEXT    NOT NULL,
+        related_id  INTEGER,
+        description TEXT    NOT NULL,
+        status      TEXT    DEFAULT 'open',
+        admin_note  TEXT,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // is_admin sütunu daha önceden olmayan veritabanlarına eklemek için migration

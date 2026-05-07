@@ -66,6 +66,8 @@ const Admin = {
             this.loadStations();
         } else if (tabName === 'reports') {
             this.loadReports();
+        } else if (tabName === 'support') {
+            this.loadSupportTickets();
         }
     },
 
@@ -351,6 +353,102 @@ const Admin = {
             this.loadReports();
         } catch (err) {
             App.showToast('Hata: ' + err.message, 'error');
+        }
+    },
+
+    // ══════════════════════════════════════
+    //  DESTEK TALEPLERİ (SUPPORT TICKETS)
+    // ══════════════════════════════════════
+    async loadSupportTickets() {
+        const tbody = document.getElementById('supportTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Yükleniyor...</td></tr>';
+
+        const statusLabels = {
+            open: 'Açık',
+            in_progress: 'İnceleniyor',
+            resolved: 'Çözüldü',
+            closed: 'Kapalı'
+        };
+
+        const categoryLabels = {
+            reservation: 'Rezervasyon',
+            payment: 'Ödeme/Cüzdan',
+            charging: 'Şarj İşlemi',
+            station: 'İstasyon',
+            other: 'Diğer'
+        };
+
+        try {
+            const tickets = await API.getAdminSupportTickets();
+            if (tickets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Henüz destek talebi yok.</td></tr>';
+                return;
+            }
+
+            // Save tickets to a local array for modal access
+            this._allSupportTickets = tickets;
+
+            tbody.innerHTML = tickets.map(t => {
+                const date = new Date(t.created_at).toLocaleString('tr-TR');
+                const catLabel = categoryLabels[t.category] || t.category;
+                const stLabel = statusLabels[t.status] || t.status;
+                const desc = t.description.length > 50 ? t.description.substring(0, 50) + '...' : t.description;
+
+                return `
+                    <tr>
+                        <td style="white-space:nowrap;">${date}</td>
+                        <td>${t.user_name}<br><span style="font-size:12px;color:var(--muted);">${t.user_email}</span></td>
+                        <td><strong>${t.subject}</strong><br><span style="font-size:12px;color:var(--muted);">${catLabel}</span></td>
+                        <td style="max-width:200px;" title="${t.description}">${desc}</td>
+                        <td><span class="badge ${t.status === 'open' ? 'admin' : (t.status === 'resolved' ? 'user' : '')}">${stLabel}</span></td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="Admin.promptUpdateSupport(${t.id})">Güncelle</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Hata: ' + err.message + '</td></tr>';
+        }
+    },
+
+    promptUpdateSupport(ticketId) {
+        const ticket = (this._allSupportTickets || []).find(t => t.id === ticketId);
+        if (!ticket) return;
+
+        document.getElementById('usTicketId').value = ticket.id;
+        document.getElementById('usUserName').textContent = ticket.user_name;
+        document.getElementById('usDescription').textContent = ticket.description;
+        document.getElementById('usStatus').value = ticket.status;
+        document.getElementById('usAdminNote').value = ticket.admin_note || '';
+
+        document.getElementById('updateSupportModal').classList.add('show');
+    },
+
+    closeUpdateSupportModal() {
+        document.getElementById('updateSupportModal').classList.remove('show');
+    },
+
+    async handleUpdateSupport(e) {
+        e.preventDefault();
+        const btn = document.getElementById('updateSupportBtn');
+        const ticketId = document.getElementById('usTicketId').value;
+        const status = document.getElementById('usStatus').value;
+        const adminNote = document.getElementById('usAdminNote').value;
+
+        btn.disabled = true;
+        btn.textContent = 'Güncelleniyor...';
+
+        try {
+            await API.updateSupportTicketStatus(ticketId, status, adminNote);
+            App.showToast('✅ Destek talebi güncellendi.');
+            this.closeUpdateSupportModal();
+            this.loadSupportTickets();
+        } catch (err) {
+            App.showToast('Hata: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Güncelle';
         }
     }
 };
