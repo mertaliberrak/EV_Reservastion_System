@@ -145,12 +145,20 @@ const Admin = {
             } else {
                 actionBtns = `
                     <button class="btn btn-secondary btn-sm" style="margin-right:4px;" onclick="Admin.promptOperatorRoleChange(${user.id}, 1, '${user.name}')">Operatör Yap</button>
-                    <button class="btn btn-primary btn-sm" onclick="Admin.promptRoleChange(${user.id}, 1, '${user.name}')">Admin Yap</button>
+                    <button class="btn btn-primary btn-sm" style="margin-right:4px;" onclick="Admin.promptRoleChange(${user.id}, 1, '${user.name}')">Admin Yap</button>
+                    <button class="btn btn-danger btn-sm" onclick="Admin.promptDeleteUser(${user.id}, '${user.name}')">Sil</button>
                 `;
             }
 
             // Kendisini düşürmesini engelle
             const isSelf = user.id === this._currentUser.id;
+            
+            // Eğer adminse, diğer adminleri ve operatörleri silebilsin (veya butonları düzenle)
+            if (user.is_admin === 1 && !isSelf) {
+               actionBtns += `<button class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="Admin.promptDeleteUser(${user.id}, '${user.name}')">Sil</button>`;
+            } else if (user.is_operator === 1 && !isSelf) {
+               actionBtns += `<button class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="Admin.promptDeleteUser(${user.id}, '${user.name}')">Sil</button>`;
+            }
 
             return `
                 <tr>
@@ -206,6 +214,22 @@ const Admin = {
             try {
                 await API.updateUserOperatorRole(userId, newRole);
                 App.showToast('Rol başarıyla güncellendi.');
+                this.loadUsers();
+            } catch (err) {
+                App.showToast('Hata: ' + err.message, 'error');
+            }
+        };
+        document.getElementById('confirmModal').classList.add('show');
+    },
+
+    promptDeleteUser(userId, userName) {
+        const message = `<b>${userName}</b> adlı kullanıcıyı <b>tamamen silmek</b> istediğinize emin misiniz?<br><br><span style="color:var(--danger);font-size:14px;">Bu işlem geri alınamaz!</span>`;
+        
+        document.getElementById('confirmModalText').innerHTML = message;
+        this._confirmActionCb = async () => {
+            try {
+                await API.deleteAdminUser(userId);
+                App.showToast('Kullanıcı başarıyla silindi.');
                 this.loadUsers();
             } catch (err) {
                 App.showToast('Hata: ' + err.message, 'error');

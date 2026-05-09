@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — Bildirimler</title>
+    <!-- Modern Yazı Tipi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <!-- Genel Stiller -->
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+        .split-layout {
+            display: flex;
+            gap: 24px;
+            height: calc(100vh - 120px);
+            max-height: 800px;
+        }
+
+        /* Sol Panel (Liste) */
+        .notif-list-pane {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .notif-list-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notif-list-header h2 {
+            font-size: 1.25rem;
+            margin: 0;
+            color: var(--text);
+        }
+
+        .mark-all-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-family: inherit;
+        }
+        .mark-all-btn:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+
+        .notif-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+        }
+
+        .notif-item:hover {
+            background: var(--card2);
+        }
+
+        .notif-item.active {
+            background: var(--card2);
+            border-color: var(--accent);
+        }
+
+        .notif-item.unread {
+            background: rgba(0, 168, 232, 0.05);
+        }
+        .notif-item.unread:hover {
+            background: rgba(0, 168, 232, 0.1);
+        }
+
+        .notif-item.unread::after {
+            content: '';
+            position: absolute;
+            top: 24px;
+            right: 16px;
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+        }
+
+        .notif-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        /* İkon arka planları (dashboard.html ile aynı) */
+        .notif-icon.created { background: rgba(0, 229, 160, .12); }
+        .notif-icon.cancelled { background: rgba(255, 68, 102, .12); }
+        .notif-icon.offline { background: rgba(255, 176, 32, .12); }
+        .notif-icon.admin { background: rgba(168, 85, 247, .12); }
+        .notif-icon.topup { background: rgba(0, 168, 232, .12); }
+
+        .notif-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .notif-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .notif-date {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        /* Sağ Panel (Detay) */
+        .notif-detail-pane {
+            flex: 2;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .detail-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .detail-empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .detail-content {
+            display: none;
+        }
+
+        .detail-content.show {
+            display: block;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .detail-title-group h1 {
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+        }
+
+        .detail-date {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .detail-body {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .detail-body p {
+            margin-bottom: 16px;
+        }
+
+        .detail-action {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .split-layout {
+                flex-direction: column;
+                height: auto;
+                max-height: none;
+            }
+            .notif-list-pane {
+                max-width: none;
+                height: 400px; /* Mobilde liste yüksekliği */
+            }
+            .notif-detail-pane {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar" id="navbar"></header>
+
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:8px; padding: 6px 12px;">
+                <span style="font-size:16px;">&larr;</span> Geri Dön
+            </button>
+        </div>
+        <div class="split-layout">
+            <!-- Sol Panel: Bildirim Listesi -->
+            <div class="notif-list-pane">
+                <div class="notif-list-header">
+                    <h2>Bildirimler</h2>
+                    <button class="mark-all-btn" onclick="Notifications.markAllRead()">Tümünü Okundu Yap</button>
+                </div>
+                <div class="notif-items" id="notifList">
+                    <div style="padding:20px; text-align:center; color:var(--muted);">Yükleniyor...</div>
+                </div>
+            </div>
+
+            <!-- Sağ Panel: Bildirim Detayı -->
+            <div class="notif-detail-pane">
+                <div class="detail-empty-state" id="detailEmptyState">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <p>Okumak için soldaki listeden bir bildirim seçin.</p>
+                </div>
+
+                <div class="detail-content" id="detailContent">
+                    <div class="detail-header">
+                        <div class="detail-icon" id="detailIcon">🔔</div>
+                        <div class="detail-title-group">
+                            <h1 id="detailTitle">Bildirim Başlığı</h1>
+                            <div class="detail-date" id="detailDate">Tarih</div>
+                        </div>
+                    </div>
+                    <div class="detail-body" id="detailMessage">
+                        <!-- Bildirim içeriği buraya gelecek -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/notifications.js"></script>
+</body>
+</html>

@@ -10,6 +10,7 @@ const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
 const isOperatorOrAdmin = require('../middleware/isOperatorOrAdmin');
 const { logAction } = require('../utils/auditLogger');
+const { createNotification } = require('../utils/notificationHelper');
 
 // Tüm route'larda auth kontrolü yap
 router.use(auth);
@@ -144,6 +145,19 @@ router.put('/chargers/:id/status', isOperatorOrAdmin, (req, res) => {
                     if (r.total_price > 0) {
                         refundStmt.run(r.total_price, r.user_id);
                     }
+
+                    // İstasyon adını al
+                    const stationInfo = db.prepare('SELECT s.name FROM stations s JOIN chargers c ON c.station_id = s.id WHERE c.id = ?').get(chargerId);
+                    const stationName = stationInfo ? stationInfo.name : 'İstasyon';
+
+                    // Kullanıcıya bildirim gönder
+                    createNotification(
+                        r.user_id,
+                        'station_offline',
+                        '⚠️ İstasyon Arızası — Rezervasyon İptal Edildi',
+                        `${stationName} istasyonundaki şarı üniteniz çevrimdışı olduğu için ${r.date} tarihli ${r.start_slot} - ${r.end_slot} rezervasyonunuz otomatik olarak iptal edildi. Ücretinizin tamamı cüzdanınıza iade edildi.`,
+                        { reservationId: r.id, stationName }
+                    );
                     
                     // Audit Log (Sistem tarafından iptal edildiğini belirtmek için admin ID kullanıyoruz)
                     logAction(req.user.id, 'AUTO_CANCEL_RESERVATION', { reservationId: r.id, reason: 'Charger marked offline', refunded: r.total_price }, req.ip);
@@ -166,6 +180,36 @@ router.put('/chargers/:id/status', isOperatorOrAdmin, (req, res) => {
         }
         console.error('Şarj ünitesi güncellenirken hata:', err);
         res.status(500).json({ error: 'İşlem sırasında bir hata oluştu.' });
+    }
+});
+
+// ══════════════════════════════════════
+// ══════════════════════════════════════
+//  DELETE /api/admin/users/:id
+// ══════════════════════════════════════
+router.delete('/users/:id', isAdmin, (req, res) => {
+    const userId = req.params.id;
+
+    try {
+        // Super admin'i silmeyi engelle (örneğin id=1 ise veya özel bir flag varsa)
+        // Eğer böyle bir kuralınız varsa buraya ekleyebilirsiniz.
+        if (userId === req.user.id.toString()) {
+            return res.status(400).json({ error: 'Kendi hesabınızı silemezsiniz.' });
+        }
+
+        const info = db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+        if (info.changes === 0) {
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        }
+
+        // Audit log
+        logAction(req.user.id, 'USER_DELETED', { targetUserId: userId }, req.ip);
+
+        res.json({ message: 'Kullanıcı başarıyla silindi.' });
+    } catch (err) {
+        console.error('Kullanıcı silme hatası:', err);
+        res.status(500).json({ error: 'Kullanıcı silinirken bir hata oluştu.' });
     }
 });
 

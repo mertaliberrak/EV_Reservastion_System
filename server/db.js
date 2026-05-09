@@ -157,6 +157,19 @@ db.exec(`
         admin_note  TEXT,
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Bildirimler
+    CREATE TABLE IF NOT EXISTS notifications (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type            TEXT    NOT NULL,
+        title           TEXT    NOT NULL,
+        message         TEXT    NOT NULL,
+        reservation_id  INTEGER REFERENCES reservations(id) ON DELETE SET NULL,
+        station_name    TEXT,
+        is_read         INTEGER DEFAULT 0,
+        created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // is_admin sütunu daha önceden olmayan veritabanlarına eklemek için migration
@@ -176,6 +189,21 @@ try {
     }
 } catch (err) {
     console.error('Migration error for users table:', err);
+}
+
+// Notifications tablosu migration (eksik sütunları ekle)
+try {
+    const notifInfo = db.pragma('table_info(notifications)');
+    if (notifInfo.length > 0) {
+        if (!notifInfo.some(c => c.name === 'reservation_id')) {
+            db.exec('ALTER TABLE notifications ADD COLUMN reservation_id INTEGER REFERENCES reservations(id) ON DELETE SET NULL;');
+        }
+        if (!notifInfo.some(c => c.name === 'station_name')) {
+            db.exec('ALTER TABLE notifications ADD COLUMN station_name TEXT;');
+        }
+    }
+} catch (err) {
+    console.error('Migration error for notifications table:', err);
 }
 
 module.exports = db;

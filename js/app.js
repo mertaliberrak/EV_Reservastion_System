@@ -124,6 +124,20 @@ const App = {
     formatCurrency(amount) {
         return Number(amount).toFixed(2) + ' ₺';
     },
+
+    // ── Zaman Biçimlendirme (Time Ago) ──
+    formatTimeAgo(dateStr) {
+        if (!dateStr) return '';
+        const now = new Date();
+        const date = new Date(dateStr + (dateStr.endsWith('Z') ? '' : 'Z'));
+        const diffSec = Math.floor((now - date) / 1000);
+
+        if (diffSec < 60) return 'Az önce';
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)} dk önce`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} saat önce`;
+        if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} gün önce`;
+        return date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+    },
 };
 
 // ── Global Aktivite Takibi ──

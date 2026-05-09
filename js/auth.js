@@ -16,9 +16,9 @@ const Auth = {
     },
 
     // ── Giriş yap (EV-05) ──
-    async login(email, password) {
+    async login(email, password, loginType) {
         try {
-            const data = await API.login(email, password);
+            const data = await API.login(email, password, loginType);
             localStorage.setItem('lastActivity', Date.now());
             return { success: true, user: data.user, token: data.token };
         } catch (err) {

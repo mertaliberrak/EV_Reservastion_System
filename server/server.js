@@ -71,6 +71,7 @@ const profileRoutes = require('./routes/profile');
 const adminRoutes = require('./routes/admin');
 const reportRoutes = require('./routes/reports');
 const supportRoutes = require('./routes/support');
+const notificationRoutes = require('./routes/notifications');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/login', loginLimiter); // Login'e özel rate limit
@@ -82,6 +83,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Google Maps API key endpoint — key backend'de kalır
 app.get('/api/config/maps-key', (req, res) => {
@@ -125,4 +127,8 @@ app.listen(PORT, () => {
     console.log(`\n⚡ EVCharge Backend çalışıyor: http://localhost:${PORT}`);
     console.log(`📁 Frontend sunuluyor: http://localhost:${PORT}/login.html`);
     console.log(`🔌 API: http://localhost:${PORT}/api\n`);
+    
+    // Arka plan servislerini başlat
+    const initNoShowCron = require('./utils/noShowCron');
+    initNoShowCron();
 });

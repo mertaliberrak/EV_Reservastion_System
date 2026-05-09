@@ -4,6 +4,7 @@ const db = require('../db');
 const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const { logAction } = require('../utils/auditLogger');
+const { createNotification } = require('../utils/notificationHelper');
 
 router.use(auth);
 
@@ -138,6 +139,14 @@ router.post('/add-funds', (req, res) => {
         // Audit Log
         logAction(req.user.id, 'PAYMENT', { amount: numAmount, method: 'CREDIT_CARD', cardId }, req.ip);
 
+        // Bildirim oluştur
+        createNotification(
+            req.user.id,
+            'wallet_topup',
+            '💰 Bakiye Yüklendi',
+            `Cüzdanınıza başarıyla ${numAmount.toFixed(2)} ₺ yüklendi.`
+        );
+
         res.json({ success: true, message: `${numAmount} ₺ başarıyla yüklendi.` });
     } catch (err) {
         res.status(500).json({ error: 'Sunucu hatası.' });
@@ -186,6 +195,41 @@ router.post('/favorites', (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ error: 'Sunucu hatası.' });
+    }
+});
+
+// GET /api/profile/history
+// Kullanıcının geçmiş şarj işlemleri ve iptal/tamamlanan rezervasyonları
+router.get('/history', (req, res) => {
+    try {
+        // Tamamlanan ve iptal edilen rezervasyonlar + varsa şarj oturumu bilgisi
+        const history = db.prepare(`
+            SELECT r.id as reservation_id,
+                   r.date, r.start_slot, r.end_slot, r.status as reservation_status,
+                   r.created_at as reserved_at,
+                   s.name as station_name, s.address as station_address,
+                   c.type as charger_type, c.power as charger_power,
+                   c.connector_type, c.price_per_kwh,
+                   v.brand as vehicle_brand, v.model as vehicle_model, v.plate_number,
+                   ses.id as session_id,
+                   ses.start_time, ses.end_time,
+                   ses.energy_consumed, ses.cost as session_cost,
+                   ses.battery_start, ses.battery_end,
+                   ses.status as session_status
+            FROM reservations r
+            JOIN stations s ON r.station_id = s.id
+            JOIN chargers c ON r.charger_id = c.id
+            JOIN vehicles v ON r.vehicle_id = v.id
+            LEFT JOIN sessions ses ON ses.reservation_id = r.id
+            WHERE r.user_id = ? AND r.status IN ('completed', 'cancelled')
+            ORDER BY r.created_at DESC
+            LIMIT 50
+        `).all(req.user.id);
+
+        res.json({ history });
+    } catch (err) {
+        console.error('History Error:', err);
+        res.status(500).json({ error: 'Geçmiş işlemler alınamadı.' });
     }
 });
 

@@ -67,8 +67,8 @@ const API = {
     // ══════════════════════════════════════
     //  AUTH
     // ══════════════════════════════════════
-    async login(email, password) {
-        const data = await this.post('/auth/login', { email, password });
+    async login(email, password, loginType) {
+        const data = await this.post('/auth/login', { email, password, loginType: loginType || 'user' });
         if (data && data.token) {
             this.setToken(data.token);
         }
@@ -128,6 +128,11 @@ const API = {
 
     async toggleFavorite(stationId) {
         return this.post('/profile/favorites', { stationId });
+    },
+
+    async getHistory() {
+        const data = await this.get('/profile/history');
+        return data.history || [];
     },
 
     // ── ARAÇLAR ──══════════════════════════════════════
@@ -237,6 +242,14 @@ const API = {
         return this.request('PUT', `/admin/users/${id}/role`, { is_admin });
     },
 
+    async deleteAdminUser(id) {
+        return this.delete(`/admin/users/${id}`);
+    },
+
+    async updateChargerStatus(id, status) {
+        return this.request('PUT', `/admin/chargers/${id}/status`, { status });
+    },
+
     // ══════════════════════════════════════
     //  REPORTS (İstasyon Sorun Bildirimleri)
     // ══════════════════════════════════════
@@ -284,5 +297,26 @@ const API = {
     // ══════════════════════════════════════
     async updateUserOperatorRole(id, is_operator) {
         return this.request('PUT', `/admin/users/${id}/role`, { is_operator });
+    },
+
+    // ══════════════════════════════════════
+    //  BİLDİRİMLER (NOTIFICATIONS)
+    // ══════════════════════════════════════
+    async getNotifications() {
+        const data = await this.get('/notifications');
+        return data.notifications || [];
+    },
+
+    async getUnreadNotificationCount() {
+        const data = await this.get('/notifications/unread-count');
+        return data.count || 0;
+    },
+
+    async markNotificationRead(id) {
+        return this.patch(`/notifications/${id}/read`, {});
+    },
+
+    async markAllNotificationsRead() {
+        return this.patch('/notifications/read-all', {});
     }
 };

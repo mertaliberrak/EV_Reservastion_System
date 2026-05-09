@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVCharge — Yönetim Girişi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --green: #00e5a0;
+            --green2: #00b87a;
+            --dark: #060a14;
+            --card: #0e1423;
+            --card2: #141c2e;
+            --border: rgba(0, 229, 160, .12);
+            --text: #e4eaf6;
+            --muted: #7a8aab;
+            --danger: #ff4466;
+            --warning: #ffb020;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--dark);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 80%, rgba(255,68,102,.06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,176,32,.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .login-container {
+            width: min(420px, 92vw);
+            animation: fadeSlideUp 0.6s ease;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Security Warning Banner */
+        .security-banner {
+            background: rgba(255,176,32,.08);
+            border: 1px solid rgba(255,176,32,.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--warning);
+        }
+        .security-banner .icon { font-size: 20px; }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.4);
+        }
+
+        /* Logo */
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .logo-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, rgba(255,68,102,.15), rgba(255,176,32,.15));
+            border: 1px solid rgba(255,68,102,.3);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .logo-text {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo-text span { color: var(--danger); }
+
+        h2 {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        /* Role Badges */
+        .role-info {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .role-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .role-badge.admin {
+            background: rgba(255,68,102,.1);
+            color: var(--danger);
+            border: 1px solid rgba(255,68,102,.3);
+        }
+        .role-badge.operator {
+            background: rgba(255,176,32,.1);
+            color: var(--warning);
+            border: 1px solid rgba(255,176,32,.3);
+        }
+
+        /* Form */
+        .field { margin-bottom: 18px; }
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--muted);
+        }
+        .field input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .field input:focus {
+            border-color: rgba(255,68,102,.5);
+            box-shadow: 0 0 0 3px rgba(255,68,102,.1);
+        }
+        .field input::placeholder { color: #4a5670; }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #cc3355, var(--danger));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            box-shadow: 0 6px 24px rgba(255,68,102,.2);
+            margin-top: 4px;
+        }
+        .login-btn:hover { opacity: .92; transform: translateY(-1px); }
+        .login-btn:active { transform: translateY(0); }
+        .login-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+        /* Error state */
+        input.error {
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 0 3px rgba(255,68,102,.15) !important;
+            animation: shake .35s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            opacity: 0;
+            transition: transform .3s ease, opacity .3s ease;
+            z-index: 999;
+            box-shadow: 0 8px 32px rgba(0,0,0,.4);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Footer link */
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .footer-link a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer-link a:hover { text-decoration: underline; }
+
+        /* Audit info */
+        .audit-note {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 11px;
+            color: rgba(122,138,171,.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="security-banner">
+            <span class="icon">🛡️</span>
+            <span>Bu sayfa yalnızca yetkili personel içindir. Tüm giriş denemeleri kayıt altına alınmaktadır.</span>
+        </div>
+
+        <div class="card">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">EV<span>Charge</span></div>
+            </div>
+            <h2>Yönetim Paneli Girişi</h2>
+            <p class="subtitle">Yönetici veya İstasyon Operatörü olarak giriş yapın</p>
+
+            <div class="role-info">
+                <span class="role-badge admin">🛡️ Admin</span>
+                <span class="role-badge operator">🔧 Operatör</span>
+            </div>
+
+            <div class="field">
+                <label for="email">E-posta</label>
+                <input type="email" id="email" placeholder="admin@evcharge.com" autocomplete="email" />
+            </div>
+            <div class="field">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+            </div>
+
+            <button class="login-btn" id="loginBtn" onclick="handleAdminLogin()">🔐 Yönetim Girişi</button>
+
+            <div class="audit-note">
+                🔒 Bu sayfaya yapılan tüm erişim denemeleri güvenlik loglarına kaydedilir.
+            </div>
+        </div>
+
+        <div class="footer-link">
+            Normal kullanıcı mısınız? <a href="login.html">Kullanıcı Girişi →</a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Zaten giriş yapmışsa yönlendir
+        (async function() {
+            if (Auth.isLoggedIn()) {
+                try {
+                    const user = await Auth.getCurrentUser();
+                    if (user && (user.is_admin === 1 || user.is_operator === 1)) {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+        })();
+
+        const emailInput = document.getElementById('email');
+        const passInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const toast = document.getElementById('toast');
+        let toastTimer;
+
+        // Enter tuşu ile giriş
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAdminLogin();
+        });
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        function shakeInput(el) {
+            el.classList.remove('error');
+            void el.offsetWidth;
+            el.classList.add('error');
+            setTimeout(() => el.classList.remove('error'), 500);
+        }
+
+        async function handleAdminLogin() {
+            const email = emailInput.value.trim();
+            const pass = passInput.value.trim();
+
+            if (!email && !pass) {
+                shakeInput(emailInput); shakeInput(passInput);
+                showToast('⚠️ E-posta ve şifre alanları boş olamaz!');
+                return;
+            }
+            if (!email) {
+                shakeInput(emailInput);
+                showToast('⚠️ Lütfen e-posta adresinizi girin.');
+                return;
+            }
+            if (!pass) {
+                shakeInput(passInput);
+                showToast('⚠️ Lütfen şifrenizi girin.');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Doğrulanıyor...';
+
+            try {
+                const result = await Auth.login(email, pass, 'admin');
+
+                if (!result.success) {
+                    shakeInput(emailInput);
+                    shakeInput(passInput);
+                    showToast('❌ ' + result.message);
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '🔐 Yönetim Girişi';
+                    return;
+                }
+
+                showToast('✅ Giriş başarılı! Yönlendiriliyorsunuz...');
+                loginBtn.textContent = '✅ Giriş Başarılı';
+
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 800);
+
+            } catch (err) {
+                shakeInput(emailInput);
+                showToast('❌ Bir hata oluştu: ' + err.message);
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🔐 Yönetim Girişi';
+            }
+        }
+    </script>
+</body>
+</html>

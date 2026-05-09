@@ -11,6 +11,7 @@ const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const auth = require('../middleware/auth');
 const { logAction } = require('../utils/auditLogger');
+const { createNotification } = require('../utils/notificationHelper');
 
 // Tüm route'lar auth gerektirir
 router.use(auth);
@@ -85,9 +86,12 @@ router.post('/', [
         return res.status(404).json({ error: 'Şarj ünitesi bulunamadı.' });
     }
 
-    // Çevrimdışı kontrolü
+    // Çevrimdışı veya kullanımda kontrolü
     if (charger.status === 'offline') {
         return res.status(400).json({ error: 'Bu şarj ünitesi şu anda çevrimdışı.' });
+    }
+    if (charger.status === 'occupied') {
+        return res.status(400).json({ error: 'Bu şarj ünitesi şu anda başka bir kullanıcı tarafından kullanılıyor.' });
     }
 
     // 3. Araç-şarj uyumluluk kontrolü (EV-13)
@@ -128,6 +132,44 @@ router.post('/', [
     }
     if (durationMins > 120) {
         return res.status(400).json({ error: 'Rezervasyon süresi en fazla 2 saat (120 dakika) olabilir.' });
+    }
+
+    // 3.5. 24 saatlik pencerede toplam süre limiti kontrolü (Maks. 120 dk / 24 saat / kullanıcı)
+    // Rezervasyonun başlangıç anından 24 saat geriye ve 24 saat ileriye bakarak kontrol et
+    const resStartISO = `${date}T${startSlot}:00`;
+    const resStartDate = new Date(resStartISO);
+    const window24hBefore = new Date(resStartDate.getTime() - 24 * 60 * 60 * 1000);
+    const window24hAfter = new Date(resStartDate.getTime() + 24 * 60 * 60 * 1000);
+
+    // 24 saat penceresi içindeki tarihleri hesapla
+    const dateBefore = window24hBefore.toISOString().split('T')[0];
+    const dateAfter = window24hAfter.toISOString().split('T')[0];
+
+    const userWindowReservations = db.prepare(
+        `SELECT date, start_slot, end_slot FROM reservations
+         WHERE user_id = ? AND status = 'active' AND date >= ? AND date <= ?`
+    ).all(req.user.id, dateBefore, dateAfter);
+
+    let totalExistingMins = 0;
+    for (const r of userWindowReservations) {
+        // Rezervasyonun gerçek başlangıç ve bitiş zamanını hesapla
+        const rStartTime = new Date(`${r.date}T${r.start_slot}:00`).getTime();
+        let rEndSlotMins = timeToMins(r.end_slot);
+        let rStartSlotMins = timeToMins(r.start_slot);
+        if (rEndSlotMins <= rStartSlotMins) rEndSlotMins += 24 * 60;
+        const rDuration = rEndSlotMins - rStartSlotMins;
+
+        // Sadece 24 saatlik pencere içinde kalanları say
+        if (rStartTime >= window24hBefore.getTime() && rStartTime <= window24hAfter.getTime()) {
+            totalExistingMins += rDuration;
+        }
+    }
+
+    if (totalExistingMins + durationMins > 120) {
+        const remainingMins = Math.max(0, 120 - totalExistingMins);
+        return res.status(400).json({
+            error: `24 saat içindeki toplam rezervasyon süreniz en fazla 2 saat (120 dakika) olabilir. Kalan süreniz: ${remainingMins} dakika.`
+        });
     }
 
     // 4. Zaman çakışması ve 15 dk boşluk kontrolü
@@ -218,6 +260,15 @@ router.post('/', [
 
     // Audit Log
     logAction(req.user.id, 'RESERVATION_CREATED', { reservationId: resId, date, startSlot, endSlot, cost: estimatedCost }, req.ip);
+
+    // Bildirim oluştur
+    createNotification(
+        req.user.id,
+        'reservation_created',
+        '📅 Rezervasyon Oluşturuldu',
+        `${reservation.station_name} istasyonunda ${date} tarihli ${startSlot} - ${endSlot} saatleri için rezervasyonunuz başarıyla oluşturuldu. Tahmini tutar: ${estimatedCost.toFixed(2)} ₺`,
+        { reservationId: resId, stationName: reservation.station_name }
+    );
 
     res.status(201).json({ message: 'Rezervasyon oluşturuldu.', reservation });
 });
@@ -526,6 +577,16 @@ router.delete('/:id', (req, res) => {
 
     // Audit Log
     logAction(req.user.id, 'RESERVATION_CANCELLED', { reservationId: req.params.id, refundAmount }, req.ip);
+
+    // Bildirim oluştur
+    const stationInfo = db.prepare('SELECT s.name FROM reservations r JOIN stations s ON r.station_id = s.id WHERE r.id = ?').get(req.params.id);
+    createNotification(
+        req.user.id,
+        'reservation_cancelled',
+        '❌ Rezervasyon İptal Edildi',
+        `${stationInfo ? stationInfo.name : 'İstasyon'} istasyonundaki ${reservation.date} tarihli ${reservation.start_slot} - ${reservation.end_slot} rezervasyonunuz iptal edildi. İade edilen tutar: ${refundAmount.toFixed(2)} ₺`,
+        { reservationId: parseInt(req.params.id), stationName: stationInfo ? stationInfo.name : null }
+    );
 
     res.json({ message: `Rezervasyon iptal edildi. Cüzdanınıza iade edilen tutar: ${refundAmount.toFixed(2)} ₺` });
 });

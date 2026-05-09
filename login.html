@@ -830,7 +830,7 @@
                 return false;
             }
             // API üzerinden kullanıcı doğrulama
-            const result = await Auth.login(email, pass);
+            const result = await Auth.login(email, pass, 'user');
             if (!result.success) {
                 shakeInput(emailInput); shakeInput(passInput);
                 showToast('❌ ' + result.message);

@@ -147,6 +147,47 @@
         }
         .vehicle-name { font-size: 15px; font-weight: 600; }
         .vehicle-details { font-size: 13px; color: var(--muted); margin-top: 4px; display:flex; flex-wrap:wrap; gap:12px; }
+
+        /* Geçmiş İşlemler */
+        .history-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            transition: border-color .2s;
+        }
+        .history-item:hover { border-color: rgba(0,229,160,.35); }
+        .history-item.cancelled { border-left: 3px solid var(--danger); }
+        .history-item.completed { border-left: 3px solid var(--green); }
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-station { font-size: 15px; font-weight: 600; }
+        .history-badge {
+            font-size: 11px; font-weight: 700; padding: 4px 10px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+        }
+        .history-badge.completed { background: rgba(0,229,160,.1); color: var(--green); border: 1px solid rgba(0,229,160,.3); }
+        .history-badge.cancelled { background: rgba(255,68,102,.1); color: var(--danger); border: 1px solid rgba(255,68,102,.3); }
+        .history-meta {
+            display: flex; flex-wrap: wrap; gap: 16px;
+            font-size: 13px; color: var(--muted); margin-bottom: 10px;
+        }
+        .history-meta span { display: flex; align-items: center; gap: 4px; }
+        .history-session {
+            background: rgba(0,229,160,.04);
+            border: 1px solid rgba(0,229,160,.15);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .history-stat { text-align: center; }
+        .history-stat-value { font-size: 18px; font-weight: 700; color: var(--green); }
+        .history-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -172,6 +213,7 @@
                 <button onclick="switchTab('vehicles')"><span>🚗</span> Araçlarım</button>
                 <button onclick="switchTab('cards')"><span>💳</span> Kartlarım</button>
                 <button onclick="switchTab('support')"><span>🎧</span> Destek Talepleri</button>
+                <button onclick="switchTab('history')"><span>📊</span> Geçmiş İşlemlerim</button>
             </nav>
 
             <!-- İçerik Alanı -->
@@ -247,6 +289,16 @@
                         <button class="btn btn-primary btn-sm" onclick="openAddSupportModal()">+ Yeni Talep</button>
                     </div>
                     <div id="supportList">
+                        <!-- JS ile yüklenecek -->
+                    </div>
+                </div>
+
+                <!-- SEKME 6: GEÇMİŞ İŞLEMLERİM -->
+                <div id="tab-history" class="tab-pane card">
+                    <div class="card-header">
+                        <h2>📊 Geçmiş Şarj İşlemlerim</h2>
+                    </div>
+                    <div id="historyList">
                         <!-- JS ile yüklenecek -->
                     </div>
                 </div>
@@ -406,6 +458,7 @@
             await loadCards();
             await loadVehicles();
             await loadSupportTickets();
+            await loadHistory();
 
             // URL hash'ine göre sekme aç (örn: profile.html#vehicles)
             const hash = window.location.hash.replace('#', '');
@@ -415,7 +468,7 @@
                 document.getElementById('tab-' + hash).classList.add('active');
                 // Nav butonunu da aktif yap
                 const navBtns = document.querySelectorAll('.profile-nav button');
-                const tabNames = ['info', 'password', 'vehicles', 'cards', 'support'];
+                const tabNames = ['info', 'password', 'vehicles', 'cards', 'support', 'history'];
                 const idx = tabNames.indexOf(hash);
                 if (idx >= 0 && navBtns[idx]) navBtns[idx].classList.add('active');
             }
@@ -798,6 +851,79 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Gönder';
+            }
+        }
+
+        // ── Geçmiş Şarj İşlemlerim ──
+        async function loadHistory() {
+            try {
+                const history = await API.getHistory();
+                const container = document.getElementById('historyList');
+
+                if (history.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state-box">
+                            <div style="font-size:32px; margin-bottom:8px;">📊</div>
+                            Henüz tamamlanmış veya iptal edilmiş bir işleminiz bulunmuyor.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = history.map(h => {
+                    const statusText = h.reservation_status === 'completed' ? 'Tamamlandı' : 'İptal Edildi';
+                    const statusClass = h.reservation_status;
+
+                    // Şarj oturumu bilgileri
+                    let sessionHTML = '';
+                    if (h.session_id && h.session_status === 'completed') {
+                        sessionHTML = `
+                            <div class="history-session">
+                                <div class="history-stat">
+                                    <div class="history-stat-value">${Number(h.energy_consumed || 0).toFixed(2)} kWh</div>
+                                    <div class="history-stat-label">Harcanan Enerji</div>
+                                </div>
+                                <div class="history-stat">
+                                    <div class="history-stat-value">${Number(h.session_cost || 0).toFixed(2)} ₺</div>
+                                    <div class="history-stat-label">Ödenen Ücret</div>
+                                </div>
+                                <div class="history-stat">
+                                    <div class="history-stat-value">%${Math.round(h.battery_start || 0)} → %${Math.round(h.battery_end || 0)}</div>
+                                    <div class="history-stat-label">Batarya Durumu</div>
+                                </div>
+                                <div class="history-stat">
+                                    <div class="history-stat-value">${h.charger_power} kW</div>
+                                    <div class="history-stat-label">Şarj Gücü</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (h.reservation_status === 'cancelled') {
+                        sessionHTML = `
+                            <div style="font-size:13px; color:var(--muted); font-style:italic; padding:8px 0;">
+                                ⛔ Şarj işlemi gerçekleşmedi — Rezervasyon iptal edildi.
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="history-item ${statusClass}">
+                            <div class="history-header">
+                                <div class="history-station">📍 ${h.station_name}</div>
+                                <span class="history-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="history-meta">
+                                <span>📅 ${h.date}</span>
+                                <span>🕐 ${h.start_slot} — ${h.end_slot}</span>
+                                <span>🔌 ${h.charger_type} ${h.charger_power}kW (${h.connector_type})</span>
+                                <span>🚗 ${h.vehicle_brand} ${h.vehicle_model} — ${h.plate_number}</span>
+                                <span>💰 ${h.price_per_kwh} ₺/kWh</span>
+                            </div>
+                            ${sessionHTML}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                App.showToast('Geçmiş işlemler yüklenemedi.', 'error');
             }
         }
 

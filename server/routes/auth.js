@@ -83,29 +83,47 @@ router.post('/login', [
         return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { email, password } = req.body;
+    const { email, password, loginType } = req.body;
 
     // Kullanıcıyı bul
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (!user) {
-        return res.status(401).json({ error: 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.' });
+        return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
     }
 
     // Şifre kontrolü
     const valid = bcrypt.compareSync(password, user.password_hash);
     if (!valid) {
-        return res.status(401).json({ error: 'Şifre hatalı.' });
+        return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
+    }
+
+    // ── Rol bazlı giriş ayrımı (Separation of Login Channels) ──
+    const isPrivileged = user.is_admin === 1 || user.is_operator === 1;
+
+    if (loginType === 'admin') {
+        // Admin/Operatör login sayfasından geliyorsa: sadece yetkili kullanıcılar girebilir
+        if (!isPrivileged) {
+            logAction(user.id, 'LOGIN_REJECTED', { email, reason: 'Yetkisiz kullanıcı admin girişi denedi', channel: 'admin' }, req.ip);
+            return res.status(403).json({ error: 'Bu giriş sayfası yalnızca yönetici ve operatör hesapları içindir.' });
+        }
+    } else {
+        // Normal login sayfasından geliyorsa: admin/operatör hesapları giriş yapamaz
+        // Güvenlik: Hesabın admin/operatör olduğunu ifşa etmemek için aynı genel hata mesajı kullanılır
+        if (isPrivileged) {
+            logAction(user.id, 'LOGIN_REJECTED', { email, reason: 'Yönetici/Operatör normal girişten giriş denedi', channel: 'user' }, req.ip);
+            return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
+        }
     }
 
     // JWT token oluştur
     const token = jwt.sign(
-        { id: user.id, email: user.email, is_admin: user.is_admin, sessionId: req.app.get('serverSessionId') },
+        { id: user.id, email: user.email, is_admin: user.is_admin, is_operator: user.is_operator, sessionId: req.app.get('serverSessionId') },
         process.env.JWT_SECRET,
         { expiresIn: TOKEN_EXPIRY }
     );
 
     // Audit log
-    logAction(user.id, 'LOGIN', { email }, req.ip);
+    logAction(user.id, 'LOGIN', { email, channel: loginType || 'user' }, req.ip);
 
     res.json({
         message: 'Giriş başarılı.',
@@ -125,7 +143,7 @@ router.post('/login', [
 //  GET /api/auth/me
 // ══════════════════════════════════════
 router.get('/me', auth, (req, res) => {
-    const user = db.prepare('SELECT id, name, email, balance, is_admin, created_at FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT id, name, email, balance, is_admin, is_operator, created_at FROM users WHERE id = ?').get(req.user.id);
     if (!user) {
         return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
     }
@@ -147,9 +165,8 @@ router.post('/forgot-password', [
     const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
 
     if (!user) {
-        // Güvenlik gereği "kullanıcı bulunamadı" demek yerine aynı mesajı dönmek best-practice'tir
-        // Ancak demo/test aşamasında olduğumuz için hata verebiliriz.
-        return res.status(404).json({ error: 'Bu e-posta adresine ait bir hesap bulunamadı.' });
+        // Güvenlik: E-posta'nın kayıtlı olup olmadığını ifşa etmemek için aynı başarılı mesajı dönülür
+        return res.json({ message: 'Eğer bu e-posta kayıtlıysa, şifre sıfırlama kodu gönderildi.' });
     }
 
     // 6 haneli rastgele kod oluştur
