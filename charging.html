@@ -455,8 +455,117 @@
             if (!user) return;
             App.renderNavbar('charging');
 
+            // Bekleyen bir şarj var mı kontrol et (Sayfa yenilendiğinde veya başka sayfadan dönüldüğünde)
+            try {
+                const sessionsRes = await API.get('/sessions');
+                const activeSession = sessionsRes.sessions.find(s => s.status === 'charging');
+                
+                if (activeSession) {
+                    await resumeChargingSession(activeSession);
+                    return;
+                }
+            } catch (err) {
+                console.error("Şarj geçmişi alınamadı", err);
+            }
+
             await loadReservations();
         })();
+
+        async function resumeChargingSession(sessionData) {
+            // Şarjın UI'a geri yüklenmesi
+            document.getElementById('setupArea').style.display = 'none';
+            document.getElementById('chargingArea').style.display = 'grid';
+            document.getElementById('batteryContainer').classList.add('charging');
+            
+            document.getElementById('startBtn').disabled = true;
+
+            // Bilgileri doldur
+            document.getElementById('infoStation').textContent = sessionData.station_name || '-';
+            const startTime = new Date(sessionData.start_time);
+            document.getElementById('infoStartTime').textContent = startTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('infoPrice').textContent = sessionData.price_per_kwh.toFixed(2) + ' ₺/kWh';
+
+            // Araç ve şarj bilgileri
+            document.getElementById('infoVehicle').textContent = sessionData.vehicleName || '-';
+            document.getElementById('infoConnector').textContent = sessionData.connector_type || '-';
+            document.getElementById('infoBattCap').textContent = sessionData.battery_capacity ? sessionData.battery_capacity + ' kWh' : '-';
+            document.getElementById('vehicleInfo').textContent = sessionData.vehicle_name ? `${sessionData.vehicle_name} • ${sessionData.connector_type}` : '';
+
+            // Charging nesnesini onar
+            Charging.activeSession = {
+                id: sessionData.id,
+                reservationId: sessionData.reservation_id,
+                startTime: sessionData.start_time,
+                pricePerKwh: sessionData.price_per_kwh,
+                batteryStart: sessionData.battery_start,
+                batteryPercent: sessionData.battery_start, // zamanla hesaplanacak
+                targetBattery: 100,
+                energyConsumed: 0,
+                cost: 0,
+                status: 'charging',
+                chargerPower: sessionData.charger_power || 50,
+                batteryCapacity: sessionData.battery_capacity || 60,
+                maxChargeRate: sessionData.max_charge_rate || 50
+            };
+            
+            Charging.activeSession.actualChargeRate = Math.min(
+                Charging.activeSession.chargerPower,
+                Charging.activeSession.maxChargeRate
+            );
+            
+            Charging.startedAt = new Date(sessionData.start_time).getTime();
+
+            // Geçen süre üzerinden güncel bataryayı tahmin et (Hızlı ileri sarma - Fast Forward)
+            const diffMs = Date.now() - Charging.startedAt;
+            const diffMinutes = diffMs / 60000;
+            // 1 saniye simülasyonda 1 dakikaya denk geliyordu.
+            // O zaman her 1 saniye gerçek hayatta 1 simülasyon dakikası ekliyor.
+            // Burada elapsed time gerçek hayattaki zaman. 
+            // Bizim simülasyonumuz: setInterval(1000ms -> SIM_MINUTES_PER_TICK = 1 dk)
+            // Yani simülasyondaki zaman = gerçek zaman saniyesi KADAR dakika geçmiş gibi hesaplanıyor.
+            const simulationTicksPassed = Math.floor(diffMs / 1000); 
+            
+            let simulatedEnergy = 0;
+            let currentBattery = sessionData.battery_start;
+            
+            // Simülasyonu hızlıca baştan sona çalıştır
+            for(let i=0; i<simulationTicksPassed; i++) {
+                let currentRate = Charging.activeSession.actualChargeRate;
+                if (currentBattery > 80) {
+                    const factor = 1 - 0.75 * ((currentBattery - 80) / 20);
+                    currentRate = currentRate * Math.max(factor, 0.25);
+                }
+                const hoursPerTick = 1 / 60; // 1 dk
+                const energyThisTick = currentRate * hoursPerTick;
+                simulatedEnergy += energyThisTick;
+                currentBattery += (energyThisTick / Charging.activeSession.batteryCapacity) * 100;
+                if (currentBattery >= 100) {
+                    currentBattery = 100;
+                    break;
+                }
+            }
+
+            Charging.activeSession.energyConsumed = simulatedEnergy;
+            Charging.activeSession.batteryPercent = currentBattery;
+            Charging.activeSession.cost = simulatedEnergy * Charging.activeSession.pricePerKwh;
+
+            // İlerleme çubuğu
+            document.getElementById('batteryProgressStart').textContent = sessionData.battery_start + '%';
+            document.getElementById('batteryProgressTarget').textContent = '100%';
+
+            updateUI(Charging.activeSession);
+            Charging.simulateCharging(updateUI, handleComplete);
+
+            if (window._elapsedTimer) clearInterval(window._elapsedTimer);
+            window._elapsedTimer = setInterval(() => {
+                const elapsed = Charging.getElapsedTime();
+                const pad = n => String(n).padStart(2, '0');
+                const timeStr = elapsed.hours > 0
+                    ? `${pad(elapsed.hours)}:${pad(elapsed.minutes)}:${pad(elapsed.seconds)}`
+                    : `${pad(elapsed.minutes)}:${pad(elapsed.seconds)}`;
+                document.getElementById('liveElapsed').textContent = timeStr;
+            }, 33);
+        }
 
         async function loadReservations() {
             try {
@@ -558,7 +667,7 @@
                     ? `${pad(elapsed.hours)}:${pad(elapsed.minutes)}:${pad(elapsed.seconds)}`
                     : `${pad(elapsed.minutes)}:${pad(elapsed.seconds)}`;
                 document.getElementById('liveElapsed').textContent = timeStr;
-            }, 1000);
+            }, 33);
         }
 
         function updateUI(session) {

@@ -8,6 +8,7 @@ const Charging = {
     activeSession: null,
     timer: null,
     startedAt: null, // JS timestamp — geçen süre hesabı için
+    SIM_SPEED_FACTOR: 30, // 1 gerçek saniye = 30 simülasyon saniyesi (1 gerçek dakika = 30 simüle dakika)
 
     // ── Şarj oturumu başlat (EV-15) — API üzerinden ──
     async startSession(reservationId, batteryStart = 20, targetBattery = 100) {
@@ -46,10 +47,12 @@ const Charging = {
         }
     },
 
-    // ── Geçen süreyi hesapla ──
+    // ── Geçen süreyi hesapla (Simüle edilmiş zaman) ──
     getElapsedTime() {
         if (!this.startedAt) return { hours: 0, minutes: 0, seconds: 0, totalSeconds: 0 };
-        const diff = Math.floor((Date.now() - this.startedAt) / 1000);
+        // Gerçek geçen saniyeyi simülasyon hızıyla çarp
+        const realDiffSeconds = (Date.now() - this.startedAt) / 1000;
+        const diff = Math.floor(realDiffSeconds * this.SIM_SPEED_FACTOR);
         return {
             hours: Math.floor(diff / 3600),
             minutes: Math.floor((diff % 3600) / 60),
@@ -93,9 +96,7 @@ const Charging = {
         if (!this.activeSession) return;
 
         const TICK_MS = 1000; // Her 1 saniyede bir güncelle
-        // Simülasyon hızlandırma: 1 saniye = 1 dakika gerçek şarj
-        const SIM_MINUTES_PER_TICK = 1;
-
+        
         this.timer = setInterval(() => {
             if (!this.activeSession || this.activeSession.status !== 'charging') {
                 clearInterval(this.timer);
@@ -113,7 +114,8 @@ const Charging = {
             }
 
             // Bu tick'te eklenen enerji (kWh)
-            const hoursPerTick = SIM_MINUTES_PER_TICK / 60;
+            // 1 saniyelik tick'in saat cinsinden değeri * hız faktörü
+            const hoursPerTick = (TICK_MS / 1000 * this.SIM_SPEED_FACTOR) / 3600;
             const energyThisTick = currentRate * hoursPerTick;
 
             s.energyConsumed += energyThisTick;

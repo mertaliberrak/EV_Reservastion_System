@@ -10,6 +10,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const auth = require('../middleware/auth');
+const { createNotification } = require('../utils/notificationHelper');
 
 router.use(auth);
 
@@ -89,8 +90,8 @@ router.post('/', [
     // Oturumu oluştur
     const result = db.prepare(
         `INSERT INTO sessions (user_id, reservation_id, start_time, price_per_kwh, battery_start, status)
-         VALUES (?, ?, datetime('now'), ?, ?, 'charging')`
-    ).run(req.user.id, reservationId, charger.price_per_kwh, batteryStart);
+         VALUES (?, ?, ?, ?, ?, 'charging')`
+    ).run(req.user.id, reservationId, new Date().toISOString(), charger.price_per_kwh, batteryStart);
 
     // Rezervasyonu 'in_progress' yap
     db.prepare("UPDATE reservations SET status = 'in_progress' WHERE id = ?").run(reservationId);
@@ -148,10 +149,12 @@ router.patch('/:id', [
     }
 
     // ── ENERJİ TÜKETİMİNİ BACKEND HESAPLAR ──
-    // Şarj süresi = şu an - oturum başlangıcı
+    // Şarj süresi = şu an - oturum başlangıcı (Simülasyon hızı faktörü ile çarpılmış)
+    const SIM_SPEED_FACTOR = 30; // Frontend ile aynı olmalı
     const now = new Date();
     const startTime = new Date(session.start_time);
-    const chargingDurationHours = Math.max((now - startTime) / (1000 * 60 * 60), 0);
+    const realDurationMs = Math.max(now - startTime, 0);
+    const chargingDurationHours = (realDurationMs * SIM_SPEED_FACTOR) / (1000 * 60 * 60);
 
     // Gerçek güç = min(istasyon gücü, araç kapasitesi)
     const actualPower = Math.min(session.power || 50, session.max_charge_rate || 50);
@@ -193,13 +196,13 @@ router.patch('/:id', [
             // Oturumu güncelle
             db.prepare(
                 `UPDATE sessions SET
-                    end_time = datetime('now'),
+                    end_time = ?,
                     energy_consumed = ?,
                     cost = ?,
                     battery_end = ?,
                     status = 'completed'
                  WHERE id = ?`
-            ).run(energyConsumed, cost, batteryEnd, req.params.id);
+            ).run(new Date().toISOString(), energyConsumed, cost, batteryEnd, req.params.id);
 
             // Bakiye mahsuplaşması (Artan para iade edilir, eksiyse kesilir)
             if (refundAmount !== 0) {
@@ -222,6 +225,22 @@ router.patch('/:id', [
     }
 
     const updated = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
+
+    // Bildirim gönder
+    let notifMessage = `Şarj işleminiz tamamlandı. Toplam Tüketim: ${energyConsumed.toFixed(2)} kWh, Maliyet: ${cost.toFixed(2)} ₺.`;
+    if (refundAmount > 0) {
+        notifMessage += ` İade Edilen Tutar: ${refundAmount.toFixed(2)} ₺ cüzdanınıza eklendi.`;
+    } else if (refundAmount < 0) {
+        notifMessage += ` Ek Tutar: ${Math.abs(refundAmount).toFixed(2)} ₺ cüzdanınızdan tahsil edildi.`;
+    }
+
+    createNotification(
+        req.user.id,
+        'wallet_topup', // Bakiye işlemi olduğu için veya yeni bir tip eklenebilir 'charging_completed'
+        '⚡ Şarj İşlemi Tamamlandı',
+        notifMessage,
+        { sessionId: req.params.id, energyConsumed, cost, refundAmount }
+    );
 
     res.json({
         message: 'Şarj tamamlandı.',
