@@ -86,6 +86,22 @@ router.post('/cards', (req, res) => {
         if (cleanNumber.length < 15) {
             return res.status(400).json({ error: 'Geçersiz kart numarası.' });
         }
+
+        // Son kullanma tarihi doğrulama (AA/YY ve ay <= 12)
+        const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+        const match = expiryDate.match(expiryRegex);
+        if (!match) {
+            return res.status(400).json({ error: 'Son kullanma tarihi geçersiz. (AA/YY formatında ve geçerli bir ay olmalı)' });
+        }
+
+        const expMonth = parseInt(match[1], 10);
+        const expYear = parseInt(match[2], 10);
+        const currentYear = parseInt(new Date().getFullYear().toString().slice(-2), 10);
+        const currentMonth = new Date().getMonth() + 1;
+
+        if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+            return res.status(400).json({ error: 'Bu kartın son kullanma tarihi geçmiş.' });
+        }
         
         const maskedNumber = '**** **** **** ' + cleanNumber.slice(-4);
 

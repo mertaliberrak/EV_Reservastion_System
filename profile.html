@@ -702,7 +702,11 @@
         function formatExpiry(input) {
             let val = input.value.replace(/\D/g, '');
             if (val.length >= 2) {
-                input.value = val.substring(0,2) + '/' + val.substring(2,4);
+                let month = parseInt(val.substring(0, 2), 10);
+                if (month > 12) month = 12;
+                if (month === 0) month = 1;
+                let monthStr = month < 10 ? '0' + month : month.toString();
+                input.value = monthStr + '/' + val.substring(2, 4);
             } else {
                 input.value = val;
             }
