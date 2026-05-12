@@ -109,6 +109,25 @@ router.post('/', [
     session.connector_type = charger.connector_type;
     session.station_name = station ? station.name : '';
 
+    // ── Bakiye limiti hesapla (Frontend simülasyonu bu limitte duracak) ──
+    function timeToMins(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+    let startMins = timeToMins(reservation.start_slot);
+    let endMins = timeToMins(reservation.end_slot);
+    if (endMins <= startMins) endMins += 24 * 60;
+    const durationHours = (endMins - startMins) / 60;
+    const actualPower = Math.min(charger.power, vehicle ? vehicle.max_charge_rate : 50);
+    const depositPaid = durationHours * actualPower * charger.price_per_kwh;
+
+    const userRow = db.prepare('SELECT balance FROM users WHERE id = ?').get(req.user.id);
+    const currentBalance = userRow ? userRow.balance : 0;
+    const maxAffordableCost = depositPaid + currentBalance;
+    const maxAffordableEnergy = maxAffordableCost / charger.price_per_kwh;
+
+    session.maxAffordableEnergy = maxAffordableEnergy;
+
     res.status(201).json({ message: 'Şarj oturumu başlatıldı.', session });
 });
 
@@ -124,7 +143,7 @@ router.patch('/:id', [
         return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { batteryEnd } = req.body;
+    let { batteryEnd } = req.body;
 
     // Oturum kontrolü (tüm ilişkili tablolarla birlikte)
     const session = db.prepare(
@@ -172,10 +191,11 @@ router.patch('/:id', [
     energyConsumed = Math.max(energyConsumed, 0);
 
     // Gerçek maliyet
-    const cost = energyConsumed * session.price_per_kwh;
+    let cost = energyConsumed * session.price_per_kwh;
 
     // Depozitoyu Yeniden Hesapla ve Mahsuplaşma Tutarını Bul
     let refundAmount = 0;
+    let depositPaid = 0;
     if (session.start_slot && session.end_slot && session.power && session.max_charge_rate) {
         function timeToMins(t) {
             const [h, m] = t.split(':').map(Number);
@@ -186,10 +206,27 @@ router.patch('/:id', [
         if (endMins <= startMins) endMins += 24 * 60;
         const durationHours = (endMins - startMins) / 60;
         
-        const depositPaid = durationHours * actualPower * session.price_per_kwh;
-        
-        refundAmount = depositPaid - cost;
+        depositPaid = durationHours * actualPower * session.price_per_kwh;
     }
+
+    // --- Bakiye limitini kontrol et (Bakiyenin eksiye düşmesini engelle) ---
+    const userRow = db.prepare('SELECT balance FROM users WHERE id = ?').get(req.user.id);
+    const currentBalance = userRow ? userRow.balance : 0;
+    const maxAffordableCost = depositPaid + currentBalance;
+
+    let isBalanceDepleted = false;
+
+    if (cost > maxAffordableCost) {
+        cost = maxAffordableCost;
+        energyConsumed = cost / session.price_per_kwh;
+        if (session.battery_capacity) {
+            const addedPercent = (energyConsumed / session.battery_capacity) * 100;
+            batteryEnd = Math.min(batteryEnd, session.battery_start + addedPercent);
+        }
+        isBalanceDepleted = true;
+    }
+
+    refundAmount = depositPaid - cost;
 
     try {
         db.transaction(() => {
@@ -227,11 +264,13 @@ router.patch('/:id', [
     const updated = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
 
     // Bildirim gönder
-    let notifMessage = `Şarj işleminiz tamamlandı. Toplam Tüketim: ${energyConsumed.toFixed(2)} kWh, Maliyet: ${cost.toFixed(2)} ₺.`;
+    let notifMessage = `Şarj işleminiz tamamlandı. Toplam Maliyet: ${cost.toFixed(2)} ₺. `;
     if (refundAmount > 0) {
-        notifMessage += ` İade Edilen Tutar: ${refundAmount.toFixed(2)} ₺ cüzdanınıza eklendi.`;
+        notifMessage += `Rezervasyon sırasında ödenen ${depositPaid.toFixed(2)} ₺ depozitonun kullanılmayan ${refundAmount.toFixed(2)} ₺'lik kısmı cüzdanınıza iade edildi.`;
     } else if (refundAmount < 0) {
-        notifMessage += ` Ek Tutar: ${Math.abs(refundAmount).toFixed(2)} ₺ cüzdanınızdan tahsil edildi.`;
+        notifMessage += `Rezervasyon depozitosu (${depositPaid.toFixed(2)} ₺) düşüldükten sonra kalan ${Math.abs(refundAmount).toFixed(2)} ₺ cüzdanınızdan tahsil edildi.`;
+    } else {
+        notifMessage += `Ödenen depozito (${depositPaid.toFixed(2)} ₺) toplam maliyeti tam karşıladı.`;
     }
 
     createNotification(
@@ -242,6 +281,16 @@ router.patch('/:id', [
         { sessionId: req.params.id, energyConsumed, cost, refundAmount }
     );
 
+    if (isBalanceDepleted) {
+        createNotification(
+            req.user.id,
+            'wallet_empty',
+            '⚠️ Bakiye Tükendi',
+            'Cüzdan bakiyeniz tükendiği için şarj işleminiz otomatik olarak durdurulmuştur.',
+            { sessionId: req.params.id }
+        );
+    }
+
     res.json({
         message: 'Şarj tamamlandı.',
         session: updated,
@@ -251,9 +300,11 @@ router.patch('/:id', [
             energyConsumed: energyConsumed.toFixed(2) + ' kWh',
             pricePerKwh: session.price_per_kwh.toFixed(2) + ' ₺',
             totalCost: cost.toFixed(2) + ' ₺',
+            depositPaid: depositPaid.toFixed(2) + ' ₺',
             depositRefund: refundAmount > 0 ? refundAmount.toFixed(2) + ' ₺' : '0.00 ₺',
-            batteryStart: session.battery_start + '%',
-            batteryEnd: batteryEnd + '%',
+            extraDeducted: refundAmount < 0 ? Math.abs(refundAmount).toFixed(2) + ' ₺' : '0.00 ₺',
+            batteryStart: session.battery_start.toFixed(1) + '%',
+            batteryEnd: batteryEnd.toFixed(1) + '%',
         },
     });
 });

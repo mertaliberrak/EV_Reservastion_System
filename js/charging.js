@@ -33,6 +33,7 @@ const Charging = {
                 vehicleName: data.session.vehicle_name || '',
                 stationName: data.session.station_name || '',
                 connectorType: data.session.connector_type || '',
+                maxAffordableEnergy: data.session.maxAffordableEnergy || Infinity,
             };
 
             // Gerçek şarj hızı = min(şarj ünitesi gücü, araç max şarj hızı)
@@ -129,6 +130,22 @@ const Charging = {
 
             // Mevcut şarj hızını kaydet (UI için)
             s.currentChargeRate = currentRate;
+
+            // ── Bakiye limiti kontrolü — enerji tüketimi karşılanabilir limiti aştıysa durdur ──
+            if (s.maxAffordableEnergy && s.energyConsumed >= s.maxAffordableEnergy) {
+                s.energyConsumed = s.maxAffordableEnergy;
+                s.cost = s.energyConsumed * s.pricePerKwh;
+                // Batarya yüzdesini de düzelt
+                const totalAddedPercent = (s.energyConsumed / s.batteryCapacity) * 100;
+                s.batteryPercent = Math.min(s.batteryStart + totalAddedPercent, 100);
+                clearInterval(this.timer);
+                this.timer = null;
+                s.balanceDepleted = true;
+                if (onUpdate) onUpdate(s);
+                this.stopSession();
+                if (onComplete) onComplete(s);
+                return;
+            }
 
             // Hedef bataryaya veya %100'e ulaştıysa
             if (s.batteryPercent >= s.targetBattery) {

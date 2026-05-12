@@ -429,10 +429,18 @@
                 <span style="color:var(--muted)">Birim Fiyat</span>
                 <strong id="rcpPrice">-</strong>
             </div>
+            <div class="receipt-row">
+                <span style="color:var(--muted)">Toplam Maliyet</span>
+                <strong id="rcpTotalCost">-</strong>
+            </div>
+            <div class="receipt-row">
+                <span style="color:var(--muted)">Ödenen Depozito</span>
+                <strong id="rcpDepositPaid">-</strong>
+            </div>
             
-            <div style="margin-top:24px; padding:16px; background:rgba(0,229,160,.1); border-radius:8px;">
-                <div style="font-size:14px; color:var(--green); margin-bottom:4px;">TOPLAM ÖDENEN</div>
-                <div style="font-size:28px; font-weight:700;" id="rcpTotal">-</div>
+            <div style="margin-top:24px; padding:16px; border-radius:8px;" id="rcpExtraArea">
+                <div style="font-size:14px; margin-bottom:4px;" id="rcpExtraLabel">EK İŞLEM</div>
+                <div style="font-size:28px; font-weight:700;" id="rcpExtraAmount">-</div>
             </div>
 
             <button class="btn btn-primary" style="width:100%; margin-top:24px;" onclick="window.location.href='dashboard.html'">
@@ -702,14 +710,22 @@
 
         function handleComplete(session) {
             document.getElementById('batteryContainer').classList.remove('charging');
-            document.getElementById('statusText').textContent = '✅ Şarj Tamamlandı';
-            document.getElementById('statusText').style.color = 'var(--text)';
-            document.getElementById('liveRemaining').textContent = 'Tamamlandı';
+
+            if (session.balanceDepleted) {
+                document.getElementById('statusText').textContent = '⚠️ Bakiye Tükendi — Şarj Durduruldu';
+                document.getElementById('statusText').style.color = 'var(--warning)';
+                document.getElementById('liveRemaining').textContent = 'Bakiye bitti';
+                App.showToast('Cüzdan bakiyeniz tükendiği için şarj işlemi otomatik olarak durduruldu.', 'error');
+            } else {
+                document.getElementById('statusText').textContent = '✅ Şarj Tamamlandı';
+                document.getElementById('statusText').style.color = 'var(--text)';
+                document.getElementById('liveRemaining').textContent = 'Tamamlandı';
+            }
 
             // Durdur butonunu devre dışı bırak
             const stopBtn = document.getElementById('stopBtn');
             stopBtn.disabled = true;
-            stopBtn.textContent = '✅ Tamamlandı';
+            stopBtn.textContent = session.balanceDepleted ? '⚠️ Bakiye Tükendi' : '✅ Tamamlandı';
 
             // Geçen süre sayacını durdur
             if (window._elapsedTimer) {
@@ -737,11 +753,35 @@
             const receipt = Charging.generateReceipt(session);
             
             document.getElementById('rcpNo').textContent = receipt.receiptNo;
-            document.getElementById('rcpBatStart').textContent = session.batteryStart + '%';
-            document.getElementById('rcpBatEnd').textContent = Math.floor(session.batteryPercent) + '%';
             document.getElementById('rcpEnergy').textContent = receipt.energyConsumed;
             document.getElementById('rcpPrice').textContent = receipt.pricePerKwh;
-            document.getElementById('rcpTotal').textContent = receipt.totalCost;
+            
+            document.getElementById('rcpTotalCost').textContent = receipt.totalCost || (session.cost.toFixed(2) + ' ₺');
+            document.getElementById('rcpDepositPaid').textContent = receipt.depositPaid || '0.00 ₺';
+            
+            const extraLabel = document.getElementById('rcpExtraLabel');
+            const extraAmount = document.getElementById('rcpExtraAmount');
+            const extraArea = document.getElementById('rcpExtraArea');
+            
+            if (receipt.depositRefund && receipt.depositRefund !== '0.00 ₺') {
+                extraLabel.textContent = 'İADE EDİLEN TUTAR';
+                extraLabel.style.color = 'var(--green)';
+                extraArea.style.background = 'rgba(0,229,160,.1)';
+                extraAmount.textContent = receipt.depositRefund;
+            } else if (receipt.extraDeducted && receipt.extraDeducted !== '0.00 ₺') {
+                extraLabel.textContent = 'EK KESİNTİ';
+                extraLabel.style.color = 'var(--danger)';
+                extraArea.style.background = 'rgba(255, 71, 87, .1)';
+                extraAmount.textContent = receipt.extraDeducted;
+            } else {
+                extraLabel.textContent = 'EK İŞLEM YOK';
+                extraLabel.style.color = 'var(--muted)';
+                extraArea.style.background = 'rgba(255, 255, 255, 0.05)';
+                extraAmount.textContent = '0.00 ₺';
+            }
+
+            document.getElementById('rcpBatStart').textContent = receipt.batteryStart || (session.batteryStart + '%');
+            document.getElementById('rcpBatEnd').textContent = receipt.batteryEnd || (Math.floor(session.batteryPercent) + '%');
 
             document.getElementById('receiptModal').classList.add('show');
         }
