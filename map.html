@@ -366,12 +366,7 @@
             document.getElementById('filterConnector').value = '';
             document.getElementById('filterPower').value = '';
             document.getElementById('filterPrice').value = '';
-            MapModule.markers.forEach(m => {
-                m.setVisible(true);
-                // Reset marker icon to overall station status
-                const overallStatus = MapModule.getStationOverallStatus(m.stationData);
-                m.setIcon(MapModule.getMarkerIcon(overallStatus));
-            });
+            MapModule.markers.forEach(m => m.setVisible(true));
             renderStationList(allStations);
         }
 
