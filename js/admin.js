@@ -23,6 +23,7 @@ const Admin = {
         if (this._currentUser.is_admin !== 1 && this._currentUser.is_operator === 1) {
             document.getElementById('btn-tab-logs').style.display = 'none';
             document.getElementById('btn-tab-users').style.display = 'none';
+            document.getElementById('btn-tab-support').style.display = 'none';
             document.getElementById('adminDesc').textContent = 'Manage stations and review issue reports.';
             this.switchTab('stations');
         } else {

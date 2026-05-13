@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
-const isOperatorOrAdmin = require('../middleware/isOperatorOrAdmin');
+const isAdmin = require('../middleware/isAdmin');
 const { logAction } = require('../utils/auditLogger');
 const { body, validationResult } = require('express-validator');
 
@@ -60,7 +60,7 @@ router.get('/', (req, res) => {
 // ══════════════════════════════════════
 //  GET /api/support/admin — Tüm talepler (Admin/Operator)
 // ══════════════════════════════════════
-router.get('/admin', isOperatorOrAdmin, (req, res) => {
+router.get('/admin', isAdmin, (req, res) => {
     try {
         const tickets = db.prepare(
             `SELECT t.*, u.name AS user_name, u.email AS user_email
@@ -80,7 +80,7 @@ router.get('/admin', isOperatorOrAdmin, (req, res) => {
 // ══════════════════════════════════════
 //  PATCH /api/support/:id — Talep durumu/notu güncelle (Admin/Operator)
 // ══════════════════════════════════════
-router.patch('/:id', isOperatorOrAdmin, [
+router.patch('/:id', isAdmin, [
     body('status').isIn(['open', 'in_progress', 'resolved', 'closed']).withMessage('Please select a valid status.')
 ], (req, res) => {
     const errors = validationResult(req);
