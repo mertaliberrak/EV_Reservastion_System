@@ -24,6 +24,8 @@ const Admin = {
             document.getElementById('btn-tab-logs').style.display = 'none';
             document.getElementById('btn-tab-users').style.display = 'none';
             document.getElementById('btn-tab-support').style.display = 'none';
+            document.getElementById('adminTitle').textContent = '🛡️ Operator Panel';
+            document.title = 'EVCharge — Operator Panel';
             document.getElementById('adminDesc').textContent = 'Manage stations and review issue reports.';
             this.switchTab('stations');
         } else {
