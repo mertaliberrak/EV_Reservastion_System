@@ -13,9 +13,9 @@ router.use(auth);
 //  POST /api/support — Yeni talep oluştur
 // ══════════════════════════════════════
 router.post('/', [
-    body('subject').notEmpty().withMessage('Konu başlığı zorunludur.'),
-    body('category').isIn(['reservation', 'payment', 'charging', 'station', 'other']).withMessage('Geçerli bir kategori seçin.'),
-    body('description').notEmpty().withMessage('Açıklama zorunludur.')
+    body('subject').notEmpty().withMessage('Subject is required.'),
+    body('category').isIn(['reservation', 'payment', 'charging', 'station', 'other']).withMessage('Please select a valid category.'),
+    body('description').notEmpty().withMessage('Description is required.')
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -32,10 +32,10 @@ router.post('/', [
 
         logAction(req.user.id, 'SUPPORT_TICKET_CREATED', { ticketId: info.lastInsertRowid, category }, req.ip);
 
-        res.status(201).json({ message: 'Destek talebiniz başarıyla oluşturuldu.', id: info.lastInsertRowid });
+        res.status(201).json({ message: 'Your support ticket has been created successfully.', id: info.lastInsertRowid });
     } catch (err) {
-        console.error('Destek talebi oluşturma hatası:', err);
-        res.status(500).json({ error: 'Destek talebi oluşturulurken bir hata meydana geldi.' });
+        console.error('Support ticket creation error:', err);
+        res.status(500).json({ error: 'An error occurred while creating the support ticket.' });
     }
 });
 
@@ -52,8 +52,8 @@ router.get('/', (req, res) => {
 
         res.json({ tickets });
     } catch (err) {
-        console.error('Destek taleplerini getirme hatası:', err);
-        res.status(500).json({ error: 'Talepler alınırken bir hata oluştu.' });
+        console.error('Error fetching support tickets:', err);
+        res.status(500).json({ error: 'An error occurred while fetching the tickets.' });
     }
 });
 
@@ -72,8 +72,8 @@ router.get('/admin', isOperatorOrAdmin, (req, res) => {
 
         res.json({ tickets });
     } catch (err) {
-        console.error('Admin talep listeleme hatası:', err);
-        res.status(500).json({ error: 'Talepler alınırken bir hata oluştu.' });
+        console.error('Error fetching support tickets:', err);
+        res.status(500).json({ error: 'An error occurred while fetching the tickets.' });
     }
 });
 
@@ -81,7 +81,7 @@ router.get('/admin', isOperatorOrAdmin, (req, res) => {
 //  PATCH /api/support/:id — Talep durumu/notu güncelle (Admin/Operator)
 // ══════════════════════════════════════
 router.patch('/:id', isOperatorOrAdmin, [
-    body('status').isIn(['open', 'in_progress', 'resolved', 'closed']).withMessage('Geçerli bir durum seçin.')
+    body('status').isIn(['open', 'in_progress', 'resolved', 'closed']).withMessage('Please select a valid status.')
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -94,7 +94,7 @@ router.patch('/:id', isOperatorOrAdmin, [
     try {
         const ticket = db.prepare('SELECT * FROM support_tickets WHERE id = ?').get(id);
         if (!ticket) {
-            return res.status(404).json({ error: 'Talep bulunamadı.' });
+            return res.status(404).json({ error: 'Ticket not found.' });
         }
 
         db.prepare(
@@ -103,10 +103,10 @@ router.patch('/:id', isOperatorOrAdmin, [
 
         logAction(req.user.id, 'SUPPORT_TICKET_UPDATED', { ticketId: id, status }, req.ip);
 
-        res.json({ message: 'Talep güncellendi.' });
+        res.json({ message: 'Ticket updated successfully.' });
     } catch (err) {
-        console.error('Talep güncelleme hatası:', err);
-        res.status(500).json({ error: 'Talep güncellenirken bir hata oluştu.' });
+        console.error('Error updating ticket:', err);
+        res.status(500).json({ error: 'An error occurred while updating the ticket.' });
     }
 });
 

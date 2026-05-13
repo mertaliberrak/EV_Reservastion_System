@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EV Charge – Giriş Yap</title>
+    <title>EV Charge – Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <style>
@@ -626,27 +626,29 @@
             <div class="logo-icon">⚡</div>
             <div class="logo-text">EV<span>Charge</span></div>
         </div>
-        <h2>Giriş Yap</h2>
-        <p class="subtitle">Şarj ağına hoş geldiniz</p>
+        <h2>Login</h2>
+        <p class="subtitle">Welcome to the charging network</p>
 
         <!-- form fields -->
         <div class="field">
-            <label for="email">E-posta</label>
-            <input type="email" id="email" placeholder="ornek@email.com" />
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="[EMAIL_ADDRESS]" />
         </div>
         <div class="field">
             <label for="password" style="display: flex; justify-content: space-between;">
-                Şifre
-                <a href="forgot-password.html" style="color: var(--green); text-decoration: none; font-size: 12px;">Şifremi Unuttum?</a>
+                Password
+                <a href="forgot-password.html"
+                    style="color: var(--green); text-decoration: none; font-size: 12px;">Forgot
+                    Password?</a>
             </label>
             <input type="password" id="password" placeholder="••••••••" />
         </div>
 
-        <div class="divider">veya kablo ile bağlan</div>
+        <div class="divider"> or plug in</div>
 
         <!-- EV charging animation -->
         <div class="charge-btn-area">
-            <p class="charge-hint" id="hint">⬇ Kabloyu araca takın ve giriş yapın</p>
+            <p class="charge-hint" id="hint">⬇ Plug in cable and login</p>
 
             <div class="scene" id="scene">
 
@@ -714,18 +716,18 @@
             </div><!-- /scene -->
 
             <!-- fallback button -->
-            <button class="connect-btn" id="connectBtn">⚡ Kabloyu Bağla & Giriş Yap</button>
+            <button class="connect-btn" id="connectBtn">⚡ Connect Cable & Login</button>
         </div>
 
         <div class="card-footer">
-            Hesabın yok mu? <a href="register.html">Kayıt Ol</a>
+            No account? <a href="register.html">Sign Up</a>
         </div>
 
         <!-- Success overlay -->
         <div class="success-overlay" id="successOverlay">
             <div class="success-icon">✅</div>
-            <div class="success-msg">Bağlantı Kuruldu!</div>
-            <div class="success-sub">Hoş geldiniz, test kullanıcısı!</div>
+            <div class="success-msg">Connected!</div>
+            <div class="success-sub">Welcome, user!</div>
         </div>
 
         <!-- Error toast -->
@@ -816,17 +818,17 @@
             const pass = passInput.value.trim();
             if (!email && !pass) {
                 shakeInput(emailInput); shakeInput(passInput);
-                showToast('⚠️ E-posta ve şifre alanları boş olamaz!');
+                showToast('⚠️ Please enter email and password!');
                 return false;
             }
             if (!email) {
                 shakeInput(emailInput);
-                showToast('⚠️ Lütfen e-posta adresinizi girin.');
+                showToast('⚠️ Please enter your email address.');
                 return false;
             }
             if (!pass) {
                 shakeInput(passInput);
-                showToast('⚠️ Lütfen şifrenizi girin.');
+                showToast('⚠️ Please enter your password.');
                 return false;
             }
             // API üzerinden kullanıcı doğrulama
@@ -911,7 +913,7 @@
                 setTimeout(() => {
                     scene.classList.add('connected');
                     chargerScreen.textContent = '⚡';
-                    hint.textContent = '⚡ Şarj ediliyor… Giriş yapılıyor';
+                    hint.textContent = '⚡ Charging… Logging in';
                     drawCable();
                     animateDots();
                     startCharging();
@@ -935,10 +937,10 @@
 
         // ── Show success overlay & redirect ─────────────────
         function showSuccess() {
-            document.querySelector('.success-sub').textContent = 'Hoş geldiniz, ' + loggedInUserName + '!';
+            document.querySelector('.success-sub').textContent = 'Welcome, ' + loggedInUserName + '!';
             successOverlay.classList.add('show');
             setTimeout(() => {
-                hint.textContent = '✅ Giriş başarılı!';
+                hint.textContent = '✅ Login successful!';
                 // Dashboard'a yönlendir
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
@@ -982,7 +984,7 @@
             plug.style.top = 'unset';
             plug.style.right = '64px';
             plug.style.bottom = '52px';
-            
+
             // Animasyon sırasında kabloyu sürekli güncelle
             const startTime = performance.now();
             function animateCable(time) {

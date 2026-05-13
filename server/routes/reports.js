@@ -27,12 +27,12 @@ const VALID_CATEGORIES = [
 ];
 
 // ══════════════════════════════════════
-//  POST /api/reports — Sorun bildir
+//  POST /api/reports — Report a problem
 // ══════════════════════════════════════
 router.post('/', [
-    body('stationId').isInt().withMessage('İstasyon ID gerekli.'),
-    body('category').isIn(VALID_CATEGORIES).withMessage('Geçerli bir kategori seçin.'),
-    body('description').isLength({ min: 10, max: 1000 }).withMessage('Açıklama en az 10, en fazla 1000 karakter olmalıdır.'),
+    body('stationId').isInt().withMessage('Station ID is required.'),
+    body('category').isIn(VALID_CATEGORIES).withMessage('Please select a valid category.'),
+    body('description').isLength({ min: 10, max: 1000 }).withMessage('Description must be at least 10 and at most 1000 characters long.'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -44,7 +44,7 @@ router.post('/', [
     // İstasyon var mı?
     const station = db.prepare('SELECT id, name FROM stations WHERE id = ?').get(stationId);
     if (!station) {
-        return res.status(404).json({ error: 'İstasyon bulunamadı.' });
+        return res.status(404).json({ error: 'Station not found.' });
     }
 
     // Spam kontrolü: son 1 saat içinde aynı istasyona bildirim var mı?
@@ -54,7 +54,7 @@ router.post('/', [
     ).get(req.user.id, stationId);
 
     if (recentReport) {
-        return res.status(429).json({ error: 'Bu istasyon için son 1 saat içinde zaten bir bildirim gönderdiniz.' });
+        return res.status(429).json({ error: 'You have already sent a report for this station in the last 1 hour.' });
     }
 
     const result = db.prepare(
@@ -68,7 +68,7 @@ router.post('/', [
     const report = db.prepare('SELECT * FROM station_reports WHERE id = ?').get(result.lastInsertRowid);
 
     res.status(201).json({
-        message: 'Bildiriminiz başarıyla gönderildi. Teşekkür ederiz!',
+        message: 'Your report has been successfully submitted. Thank you!',
         report,
     });
 });
@@ -94,7 +94,7 @@ router.get('/', (req, res) => {
 router.get('/admin', (req, res) => {
     // Admin veya Operatör kontrolü
     if (!req.user.is_admin && !req.user.is_operator) {
-        return res.status(403).json({ error: 'Yetkiniz yok.' });
+        return res.status(403).json({ error: 'You do not have permission.' });
     }
 
     const reports = db.prepare(
@@ -110,14 +110,14 @@ router.get('/admin', (req, res) => {
 });
 
 // ══════════════════════════════════════
-//  PATCH /api/reports/:id — Durum güncelle (Admin)
+//  PATCH /api/reports/:id — Update status (Admin)
 // ══════════════════════════════════════
 router.patch('/:id', [
-    body('status').isIn(['open', 'in_progress', 'resolved', 'dismissed']).withMessage('Geçerli bir durum seçin.'),
+    body('status').isIn(['open', 'in_progress', 'resolved', 'dismissed']).withMessage('Please select a valid status.'),
 ], (req, res) => {
     // Admin veya Operatör kontrolü
     if (!req.user.is_admin && !req.user.is_operator) {
-        return res.status(403).json({ error: 'Yetkiniz yok.' });
+        return res.status(403).json({ error: 'You do not have permission.' });
     }
 
     const errors = validationResult(req);
@@ -130,7 +130,7 @@ router.patch('/:id', [
 
     const report = db.prepare('SELECT * FROM station_reports WHERE id = ?').get(req.params.id);
     if (!report) {
-        return res.status(404).json({ error: 'Bildirim bulunamadı.' });
+        return res.status(404).json({ error: 'Report not found.' });
     }
 
     db.prepare(
@@ -139,7 +139,7 @@ router.patch('/:id', [
 
     logAction(req.user.id, 'REPORT_STATUS_CHANGED', { reportId: req.params.id, newStatus: status }, req.ip);
 
-    res.json({ message: 'Bildirim durumu güncellendi.' });
+    res.json({ message: 'Report status updated.' });
 });
 
 module.exports = router;

@@ -102,7 +102,7 @@ const MapModule = {
                 this.userMarker = new google.maps.Marker({
                     position: this.userPosition,
                     map: this.map,
-                    title: 'Konumunuz',
+                    title: 'Your Location',
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         fillColor: '#4285F4',
@@ -118,7 +118,7 @@ const MapModule = {
                 this.map.setCenter(this.userPosition);
             },
             () => {
-                console.log('Konum erişimi reddedildi, İzmir merkez kullanılıyor.');
+                console.log('Location access denied, using Izmir center.');
             }
         );
     },
@@ -136,7 +136,7 @@ const MapModule = {
                 this.userPosition.lat, this.userPosition.lng,
                 station.lat, station.lng
             );
-            distanceText = `<div style="color:#00a8e8;font-size:13px;margin-top:4px;">📍 ${dist.toFixed(1)} km uzaklıkta</div>`;
+            distanceText = `<div style="color:#00a8e8;font-size:13px;margin-top:4px;">📍 ${dist.toFixed(1)} km away</div>`;
         }
 
         const statusBadge = this.getStatusBadgeHTML(this.getStationOverallStatus(station));
@@ -148,33 +148,33 @@ const MapModule = {
                 ${distanceText}
                 <div style="margin:8px 0;">${statusBadge}</div>
                 <div style="font-size:13px;color:#555;margin-bottom:8px;">
-                    ⚡ ${available}/${total} şarj ünitesi müsait<br>
+                    ⚡ ${available}/${total} chargers available<br>
                     🕐 ${station.operating_hours || station.operatingHours}
                 </div>
                 <div style="display:flex;gap:8px; flex-wrap:wrap;">
                     <a href="station-detail.html?id=${station.id}" 
                        style="background:#00e5a0;color:#0a0e1a;padding:7px 14px;border-radius:8px;
                               font-size:13px;font-weight:600;text-decoration:none;display:inline-block;">
-                        Detay Gör
+                        See Details
                     </a>
                     ${this.getStationOverallStatus(station) === 'offline' ? `
-                    <button onclick="App.showToast('Bu istasyon şu an çevrimdışı. Lütfen başka bir istasyon seçin.', 'error')" 
+                    <button onclick="App.showToast('This station is currently offline. Please select another station.', 'error')" 
                        style="background:#666;color:#ccc;padding:7px 14px;border-radius:8px;
                               font-size:13px;font-weight:600;border:none;cursor:not-allowed;display:inline-block;">
-                        📅 Rezervasyon Kapalı
+                        📅 Reservation Closed
                     </button>
                     ` : `
                     <a href="reservation.html?station=${station.id}" 
                        style="background:#00a8e8;color:#fff;padding:7px 14px;border-radius:8px;
                               font-size:13px;font-weight:600;text-decoration:none;display:inline-block;">
-                        📅 Rezervasyon
+                        📅 Reservation
                     </a>
                     `}
                     <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}" 
                        target="_blank"
                        style="background:#4285F4;color:#fff;padding:7px 14px;border-radius:8px;
                               font-size:13px;font-weight:600;text-decoration:none;display:inline-block;">
-                        🧭 Yol Tarifi
+                        🧭 Get Directions
                     </a>
                 </div>
             </div>
@@ -186,26 +186,26 @@ const MapModule = {
 
     getStatusBadgeHTML(status) {
         const map = {
-            available: { text: '● Müsait', color: '#00e5a0', bg: 'rgba(0,229,160,.1)' },
-            occupied: { text: '● Dolu', color: '#ffd700', bg: 'rgba(255,215,0,.1)' },
-            offline: { text: '● Çevrimdışı', color: '#ff4466', bg: 'rgba(255,68,102,.1)' },
+            available: { text: '● Available', color: '#00e5a0', bg: 'rgba(0,229,160,.1)' },
+            occupied: { text: '● Occupied', color: '#ffd700', bg: 'rgba(255,215,0,.1)' },
+            offline: { text: '● Offline', color: '#ff4466', bg: 'rgba(255,68,102,.1)' },
         };
         const s = map[status] || map.offline;
         return `<span style="background:${s.bg};color:${s.color};padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;">${s.text}</span>`;
     },
 
-    // ── Mesafe hesapla (Haversine) ──
+    // ── Calculate distance (Haversine) ──
     calculateDistance(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLng = (lng2 - lng1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) ** 2 +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLng / 2) ** 2;
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) ** 2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     },
 
-    // ── Filtreleme (GM-05) ──
+    // ── Filtering (GM-05) ──
     filterStations(filters) {
         const { connectorType, minPower, maxPrice, statusFilter } = filters;
 

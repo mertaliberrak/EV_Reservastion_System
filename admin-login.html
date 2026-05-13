@@ -1,13 +1,20 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Yönetim Girişi</title>
+    <title>EVCharge — Admin Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --green: #00e5a0;
@@ -39,8 +46,8 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 50% at 20% 80%, rgba(255,68,102,.06) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,176,32,.05) 0%, transparent 60%);
+                radial-gradient(ellipse 80% 50% at 20% 80%, rgba(255, 68, 102, .06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255, 176, 32, .05) 0%, transparent 60%);
             pointer-events: none;
         }
 
@@ -50,14 +57,21 @@
         }
 
         @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Security Warning Banner */
         .security-banner {
-            background: rgba(255,176,32,.08);
-            border: 1px solid rgba(255,176,32,.25);
+            background: rgba(255, 176, 32, .08);
+            border: 1px solid rgba(255, 176, 32, .25);
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -67,7 +81,10 @@
             font-size: 13px;
             color: var(--warning);
         }
-        .security-banner .icon { font-size: 20px; }
+
+        .security-banner .icon {
+            font-size: 20px;
+        }
 
         /* Card */
         .card {
@@ -75,7 +92,7 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 36px 32px;
-            box-shadow: 0 20px 60px rgba(0,0,0,.4);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .4);
         }
 
         /* Logo */
@@ -86,20 +103,28 @@
             gap: 12px;
             margin-bottom: 8px;
         }
+
         .logo-icon {
-            width: 44px; height: 44px;
-            background: linear-gradient(135deg, rgba(255,68,102,.15), rgba(255,176,32,.15));
-            border: 1px solid rgba(255,68,102,.3);
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, rgba(255, 68, 102, .15), rgba(255, 176, 32, .15));
+            border: 1px solid rgba(255, 68, 102, .3);
             border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 22px;
         }
+
         .logo-text {
             font-size: 26px;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
-        .logo-text span { color: var(--danger); }
+
+        .logo-text span {
+            color: var(--danger);
+        }
 
         h2 {
             text-align: center;
@@ -107,6 +132,7 @@
             font-weight: 600;
             margin-bottom: 4px;
         }
+
         .subtitle {
             text-align: center;
             color: var(--muted);
@@ -121,6 +147,7 @@
             gap: 10px;
             margin-bottom: 24px;
         }
+
         .role-badge {
             padding: 6px 14px;
             border-radius: 20px;
@@ -128,19 +155,24 @@
             font-weight: 700;
             letter-spacing: .3px;
         }
+
         .role-badge.admin {
-            background: rgba(255,68,102,.1);
+            background: rgba(255, 68, 102, .1);
             color: var(--danger);
-            border: 1px solid rgba(255,68,102,.3);
+            border: 1px solid rgba(255, 68, 102, .3);
         }
+
         .role-badge.operator {
-            background: rgba(255,176,32,.1);
+            background: rgba(255, 176, 32, .1);
             color: var(--warning);
-            border: 1px solid rgba(255,176,32,.3);
+            border: 1px solid rgba(255, 176, 32, .3);
         }
 
         /* Form */
-        .field { margin-bottom: 18px; }
+        .field {
+            margin-bottom: 18px;
+        }
+
         .field label {
             display: block;
             font-size: 13px;
@@ -148,6 +180,7 @@
             margin-bottom: 6px;
             color: var(--muted);
         }
+
         .field input {
             width: 100%;
             padding: 12px 14px;
@@ -160,11 +193,15 @@
             outline: none;
             transition: border-color .2s, box-shadow .2s;
         }
+
         .field input:focus {
-            border-color: rgba(255,68,102,.5);
-            box-shadow: 0 0 0 3px rgba(255,68,102,.1);
+            border-color: rgba(255, 68, 102, .5);
+            box-shadow: 0 0 0 3px rgba(255, 68, 102, .1);
         }
-        .field input::placeholder { color: #4a5670; }
+
+        .field input::placeholder {
+            color: #4a5670;
+        }
 
         .login-btn {
             width: 100%;
@@ -179,23 +216,46 @@
             letter-spacing: .5px;
             cursor: pointer;
             transition: opacity .2s, transform .15s;
-            box-shadow: 0 6px 24px rgba(255,68,102,.2);
+            box-shadow: 0 6px 24px rgba(255, 68, 102, .2);
             margin-top: 4px;
         }
-        .login-btn:hover { opacity: .92; transform: translateY(-1px); }
-        .login-btn:active { transform: translateY(0); }
-        .login-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+        .login-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         /* Error state */
         input.error {
             border-color: var(--danger) !important;
-            box-shadow: 0 0 0 3px rgba(255,68,102,.15) !important;
+            box-shadow: 0 0 0 3px rgba(255, 68, 102, .15) !important;
             animation: shake .35s ease;
         }
+
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-6px);
+            }
+
+            75% {
+                transform: translateX(6px);
+            }
         }
 
         /* Toast */
@@ -213,8 +273,9 @@
             opacity: 0;
             transition: transform .3s ease, opacity .3s ease;
             z-index: 999;
-            box-shadow: 0 8px 32px rgba(0,0,0,.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
         }
+
         .toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
@@ -227,19 +288,23 @@
             font-size: 13px;
             color: var(--muted);
         }
+
         .footer-link a {
             color: var(--green);
             text-decoration: none;
             font-weight: 600;
         }
-        .footer-link a:hover { text-decoration: underline; }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
 
         /* Audit info */
         .audit-note {
             text-align: center;
             margin-top: 16px;
             font-size: 11px;
-            color: rgba(122,138,171,.6);
+            color: rgba(122, 138, 171, .6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -247,11 +312,12 @@
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="security-banner">
             <span class="icon">🛡️</span>
-            <span>Bu sayfa yalnızca yetkili personel içindir. Tüm giriş denemeleri kayıt altına alınmaktadır.</span>
+            <span>This page is for authorized personnel only. All login attempts are being recorded.</span>
         </div>
 
         <div class="card">
@@ -259,12 +325,12 @@
                 <div class="logo-icon">🛡️</div>
                 <div class="logo-text">EV<span>Charge</span></div>
             </div>
-            <h2>Yönetim Paneli Girişi</h2>
-            <p class="subtitle">Yönetici veya İstasyon Operatörü olarak giriş yapın</p>
+            <h2>Admin Panel Login</h2>
+            <p class="subtitle">Login as Admin or Station Operator</p>
 
             <div class="role-info">
                 <span class="role-badge admin">🛡️ Admin</span>
-                <span class="role-badge operator">🔧 Operatör</span>
+                <span class="role-badge operator">🔧 Operator</span>
             </div>
 
             <div class="field">
@@ -276,15 +342,15 @@
                 <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
             </div>
 
-            <button class="login-btn" id="loginBtn" onclick="handleAdminLogin()">🔐 Yönetim Girişi</button>
+            <button class="login-btn" id="loginBtn" onclick="handleAdminLogin()">🔐 Login</button>
 
             <div class="audit-note">
-                🔒 Bu sayfaya yapılan tüm erişim denemeleri güvenlik loglarına kaydedilir.
+                This page is for authorized personnel only. All login attempts are being recorded.
             </div>
         </div>
 
         <div class="footer-link">
-            Normal kullanıcı mısınız? <a href="login.html">Kullanıcı Girişi →</a>
+            Not an admin? <a href="login.html">User Login →</a>
         </div>
     </div>
 
@@ -294,7 +360,7 @@
     <script src="js/auth.js"></script>
     <script>
         // Zaten giriş yapmışsa yönlendir
-        (async function() {
+        (async function () {
             if (Auth.isLoggedIn()) {
                 try {
                     const user = await Auth.getCurrentUser();
@@ -302,7 +368,7 @@
                         window.location.href = 'admin.html';
                         return;
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
         })();
 
@@ -337,22 +403,22 @@
 
             if (!email && !pass) {
                 shakeInput(emailInput); shakeInput(passInput);
-                showToast('⚠️ E-posta ve şifre alanları boş olamaz!');
+                showToast('⚠️ Email and password fields cannot be empty!');
                 return;
             }
             if (!email) {
                 shakeInput(emailInput);
-                showToast('⚠️ Lütfen e-posta adresinizi girin.');
+                showToast('⚠️ Please enter your email address.');
                 return;
             }
             if (!pass) {
                 shakeInput(passInput);
-                showToast('⚠️ Lütfen şifrenizi girin.');
+                showToast('⚠️ Please enter your password.');
                 return;
             }
 
             loginBtn.disabled = true;
-            loginBtn.textContent = 'Doğrulanıyor...';
+            loginBtn.textContent = 'Logging in...';
 
             try {
                 const result = await Auth.login(email, pass, 'admin');
@@ -362,12 +428,12 @@
                     shakeInput(passInput);
                     showToast('❌ ' + result.message);
                     loginBtn.disabled = false;
-                    loginBtn.textContent = '🔐 Yönetim Girişi';
+                    loginBtn.textContent = '🔐 Admin Login';
                     return;
                 }
 
-                showToast('✅ Giriş başarılı! Yönlendiriliyorsunuz...');
-                loginBtn.textContent = '✅ Giriş Başarılı';
+                showToast('Login success! Redirecting...');
+                loginBtn.textContent = '✅ Login Success';
 
                 setTimeout(() => {
                     window.location.href = 'admin.html';
@@ -375,11 +441,12 @@
 
             } catch (err) {
                 shakeInput(emailInput);
-                showToast('❌ Bir hata oluştu: ' + err.message);
+                showToast('❌ An error occurred: ' + err.message);
                 loginBtn.disabled = false;
-                loginBtn.textContent = '🔐 Yönetim Girişi';
+                loginBtn.textContent = '🔐 Admin Login';
             }
         }
     </script>
 </body>
+
 </html>

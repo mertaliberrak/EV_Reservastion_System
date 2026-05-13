@@ -24,7 +24,7 @@ const App = {
     checkInactivity() {
         const last = localStorage.getItem('lastActivity');
         if (last && (Date.now() - parseInt(last) > this._INACTIVITY_LIMIT)) {
-            console.warn('Oturum zaman aşımına uğradı.');
+            console.warn('Session timeout.');
             this.logout();
             return true;
         }
@@ -46,15 +46,15 @@ const App = {
                 <div class="nav-logo-text">EV<span>Charge</span></div>
             </a>
             <nav class="nav-links">
-                <a href="dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>🏠 <span>Panel</span></a>
-                <a href="wallet.html" ${activePage === 'wallet' ? 'class="active"' : ''}>💳 <span>Cüzdan</span></a>
-                <a href="map.html" ${activePage === 'map' ? 'class="active"' : ''}>🗺️ <span>Harita</span></a>
-                <a href="recommend.html" ${activePage === 'recommend' ? 'class="active"' : ''}>🎯 <span>Tavsiye</span></a>
-                <a href="reservation.html" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Rezervasyon</span></a>
-                <a href="charging.html" ${activePage === 'charging' ? 'class="active"' : ''}>⚡ <span>Şarj</span></a>
-                <a href="profile.html" ${activePage === 'profile' ? 'class="active"' : ''}>👤 <span>Profil</span></a>
-                ${showAdminPanel ? `<a href="admin.html" ${activePage === 'admin' ? 'class="active"' : ''}>🛡️ <span>Yönetim</span></a>` : ''}
-                <button class="btn-logout" onclick="App.logout()">🚪 Çıkış</button>
+                <a href="dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>🏠 <span>Dashboard</span></a>
+                <a href="wallet.html" ${activePage === 'wallet' ? 'class="active"' : ''}>💳 <span>Wallet</span></a>
+                <a href="map.html" ${activePage === 'map' ? 'class="active"' : ''}>🗺️ <span>Map</span></a>
+                <a href="recommend.html" ${activePage === 'recommend' ? 'class="active"' : ''}>🎯 <span>Recommendation</span></a>
+                <a href="reservation.html" ${activePage === 'reservation' ? 'class="active"' : ''}>📅 <span>Reservation</span></a>
+                <a href="charging.html" ${activePage === 'charging' ? 'class="active"' : ''}>⚡ <span>Charging</span></a>
+                <a href="profile.html" ${activePage === 'profile' ? 'class="active"' : ''}>👤 <span>Profile</span></a>
+                ${showAdminPanel ? `<a href="admin.html" ${activePage === 'admin' ? 'class="active"' : ''}>🛡️ <span>Admin</span></a>` : ''}
+                <button class="btn-logout" onclick="App.logout()">🚪 Logout</button>
             </nav>
         `;
     },

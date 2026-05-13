@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Şarj Oturumu</title>
+    <title>EVCharge — Charging Session</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
@@ -14,8 +15,11 @@
             gap: 24px;
             align-items: start;
         }
+
         @media (max-width: 900px) {
-            .charging-layout { grid-template-columns: 1fr; }
+            .charging-layout {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Batarya Animasyonu */
@@ -72,7 +76,7 @@
             font-size: 24px;
             font-weight: 700;
             color: #fff;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
             z-index: 2;
         }
 
@@ -80,28 +84,36 @@
         .battery-level::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(
-                45deg,
-                rgba(255,255,255,0.2) 25%,
-                transparent 25%,
-                transparent 50%,
-                rgba(255,255,255,0.2) 50%,
-                rgba(255,255,255,0.2) 75%,
-                transparent 75%,
-                transparent
-            );
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, 0.2) 50%,
+                    rgba(255, 255, 255, 0.2) 75%,
+                    transparent 75%,
+                    transparent);
             background-size: 20px 20px;
             animation: moveStripes 1s linear infinite;
             display: none;
             border-radius: 6px;
         }
 
-        .charging .battery-level::after { display: block; }
+        .charging .battery-level::after {
+            display: block;
+        }
 
         @keyframes moveStripes {
-            0% { background-position: 0 0; }
-            100% { background-position: 20px 20px; }
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 20px 20px;
+            }
         }
 
         /* Bilgi Paneli */
@@ -125,20 +137,39 @@
             margin-bottom: 16px;
             font-size: 15px;
         }
-        .stat-label { color: var(--muted); }
-        .stat-val { font-weight: 600; font-size: 16px; }
+
+        .stat-label {
+            color: var(--muted);
+        }
+
+        .stat-val {
+            font-weight: 600;
+            font-size: 16px;
+        }
 
         .cost-display {
-            background: rgba(0,229,160,.1);
-            border: 1px solid rgba(0,229,160,.3);
+            background: rgba(0, 229, 160, .1);
+            border: 1px solid rgba(0, 229, 160, .3);
             border-radius: var(--radius);
             padding: 16px;
             text-align: center;
             margin-top: 24px;
             margin-bottom: 24px;
         }
-        .cost-display .label { font-size: 13px; color: var(--green); text-transform: uppercase; letter-spacing: 1px; }
-        .cost-display .amount { font-size: 32px; font-weight: 700; color: #fff; margin-top: 4px; }
+
+        .cost-display .label {
+            font-size: 13px;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cost-display .amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 4px;
+        }
 
         /* Seçim Alanı */
         .setup-area {
@@ -152,13 +183,21 @@
         /* Makbuz Modal */
         .receipt-modal {
             display: none;
-            position: fixed; top:0; left:0; right:0; bottom:0;
-            background: rgba(10,14,26,0.9);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 26, 0.9);
             z-index: 100;
             align-items: center;
             justify-content: center;
         }
-        .receipt-modal.show { display: flex; }
+
+        .receipt-modal.show {
+            display: flex;
+        }
+
         .receipt-card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -168,11 +207,23 @@
             max-width: 400px;
             text-align: center;
         }
-        .receipt-icon { font-size: 48px; margin-bottom: 16px; }
-        .receipt-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+
+        .receipt-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .receipt-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
         .receipt-row {
-            display: flex; justify-content: space-between;
-            margin-bottom: 12px; font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
             border-bottom: 1px dashed var(--border);
             padding-bottom: 8px;
         }
@@ -231,8 +282,15 @@
         }
 
         @keyframes valuePulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
         /* ── Batarya İlerleme Çubuğu ── */
@@ -259,9 +317,11 @@
         .battery-progress-fill::after {
             content: '';
             position: absolute;
-            top: 0; right: 0; bottom: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
             width: 30px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
             border-radius: 0 5px 5px 0;
         }
 
@@ -278,35 +338,43 @@
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
             }
-            .live-stat-card { padding: 12px 8px; }
-            .live-stat-value { font-size: 20px; }
+
+            .live-stat-card {
+                padding: 12px 8px;
+            }
+
+            .live-stat-value {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
     <header class="navbar" id="navbar"></header>
 
     <div class="container">
-        <h1>⚡ Şarj Oturumu</h1>
-        
+        <h1>⚡ Charging Session</h1>
+
         <!-- Adım 1: Rezervasyon Seçimi -->
         <div id="setupArea" class="setup-area">
-            <h3 style="margin-bottom:16px;">Aktif Rezervasyonunuzu Seçin</h3>
+            <h3 style="margin-bottom:16px;">Select Your Active Reservation</h3>
             <div class="form-group">
                 <select class="form-control" id="resSelect">
-                    <option value="">Rezervasyonlar yükleniyor...</option>
+                    <option value="">Loading reservations...</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Mevcut Batarya Yüzdesi (%)</label>
-                <input type="number" class="form-control" id="batteryStart" min="0" max="99" value="20" style="width:100px;">
+                <label>Current Battery Percentage (%)</label>
+                <input type="number" class="form-control" id="batteryStart" min="0" max="99" value="20"
+                    style="width:100px;">
             </div>
-            <button class="btn btn-primary" onclick="startCharging()" id="startBtn">Şarjı Başlat</button>
+            <button class="btn btn-primary" onclick="startCharging()" id="startBtn">Start Charging</button>
         </div>
 
         <!-- Adım 2: Canlı Şarj Ekranı -->
         <div id="chargingArea" class="charging-layout" style="display:none;">
-            
+
             <!-- Sol: Batarya + Canlı İstatistikler -->
             <div>
                 <!-- Batarya Animasyonu -->
@@ -316,7 +384,7 @@
                         <div class="battery-level" id="batteryLevel"></div>
                         <div class="battery-text" id="batteryText">20%</div>
                     </div>
-                    <h2 id="statusText" style="color:var(--green);">⚡ Şarj Ediliyor...</h2>
+                    <h2 id="statusText" style="color:var(--green);">⚡ Charging...</h2>
                     <p id="vehicleInfo" style="color:var(--muted); font-size:14px; margin-top:8px;"></p>
                 </div>
 
@@ -326,68 +394,68 @@
                         <div class="live-stat-icon">⚡</div>
                         <div class="live-stat-value" id="liveEnergy">0.00</div>
                         <div class="live-stat-unit">kWh</div>
-                        <div class="live-stat-label">Tüketilen Enerji</div>
+                        <div class="live-stat-label">Consumed Energy</div>
                     </div>
                     <div class="live-stat-card" id="statTime">
                         <div class="live-stat-icon">⏱️</div>
                         <div class="live-stat-value" id="liveElapsed">00:00</div>
                         <div class="live-stat-unit">&nbsp;</div>
-                        <div class="live-stat-label">Geçen Süre</div>
+                        <div class="live-stat-label">Time Elapsed</div>
                     </div>
                     <div class="live-stat-card" id="statRemaining">
                         <div class="live-stat-icon">⏳</div>
                         <div class="live-stat-value" id="liveRemaining">-</div>
                         <div class="live-stat-unit">&nbsp;</div>
-                        <div class="live-stat-label">Tahmini Kalan</div>
+                        <div class="live-stat-label">Estimated Time Remaining</div>
                     </div>
                     <div class="live-stat-card" id="statRate">
                         <div class="live-stat-icon">🔌</div>
                         <div class="live-stat-value" id="liveRate">0</div>
                         <div class="live-stat-unit">kW</div>
-                        <div class="live-stat-label">Anlık Şarj Hızı</div>
+                        <div class="live-stat-label">Current Charging Rate</div>
                     </div>
                 </div>
             </div>
 
             <!-- Sağ: Bilgi Paneli -->
             <div class="info-panel">
-                <h3>Oturum Bilgileri</h3>
-                
+                <h3>Session Information</h3>
+
                 <div class="stat-row">
-                    <span class="stat-label">İstasyon</span>
+                    <span class="stat-label">Station</span>
                     <span class="stat-val" id="infoStation">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Araç</span>
+                    <span class="stat-label">Vehicle</span>
                     <span class="stat-val" id="infoVehicle">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Konnektör</span>
+                    <span class="stat-label">Connector</span>
                     <span class="stat-val" id="infoConnector">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Başlangıç</span>
+                    <span class="stat-label">Start Time</span>
                     <span class="stat-val" id="infoStartTime">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Batarya Kapasitesi</span>
+                    <span class="stat-label">Battery Capacity</span>
                     <span class="stat-val" id="infoBattCap">-</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Tüketilen Enerji</span>
+                    <span class="stat-label">Consumed Energy</span>
                     <span class="stat-val" id="infoEnergy">0.00 kWh</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Birim Fiyat</span>
+                    <span class="stat-label">Unit Price</span>
                     <span class="stat-val" id="infoPrice">-</span>
                 </div>
 
                 <div class="cost-display">
-                    <div class="label">Güncel Tutar</div>
+                    <div class="label">Current Cost</div>
                     <div class="amount" id="infoCost">0.00 ₺</div>
                 </div>
 
-                <!-- Batarya İlerleme Çubuğu -->
+                <!-- Battery Progress Bar -->
                 <div class="battery-progress-bar">
                     <div class="battery-progress-track">
                         <div class="battery-progress-fill" id="batteryProgressFill" style="width:20%"></div>
@@ -399,8 +467,9 @@
                     </div>
                 </div>
 
-                <button class="btn btn-danger" id="stopBtn" style="width:100%; height:50px; font-size:16px;" onclick="stopCharging()">
-                    🛑 Şarjı Durdur
+                <button class="btn btn-danger" id="stopBtn" style="width:100%; height:50px; font-size:16px;"
+                    onclick="stopCharging()">
+                    🛑 Stop Charging
                 </button>
             </div>
         </div>
@@ -411,40 +480,41 @@
     <div class="receipt-modal" id="receiptModal">
         <div class="receipt-card">
             <div class="receipt-icon">✅</div>
-            <div class="receipt-title">Şarj Tamamlandı</div>
-            
+            <div class="receipt-title">Charging Completed</div>
+
             <div class="receipt-row">
-                <span style="color:var(--muted)">Makbuz No</span>
+                <span style="color:var(--muted)">Receipt No</span>
                 <strong id="rcpNo">-</strong>
             </div>
             <div class="receipt-row">
-                <span style="color:var(--muted)">Batarya</span>
+                <span style="color:var(--muted)">Battery</span>
                 <strong><span id="rcpBatStart"></span> ➔ <span id="rcpBatEnd"></span></strong>
             </div>
             <div class="receipt-row">
-                <span style="color:var(--muted)">Tüketim</span>
+                <span style="color:var(--muted)">Consumed</span>
                 <strong id="rcpEnergy">-</strong>
             </div>
             <div class="receipt-row">
-                <span style="color:var(--muted)">Birim Fiyat</span>
+                <span style="color:var(--muted)">Unit Price</span>
                 <strong id="rcpPrice">-</strong>
             </div>
             <div class="receipt-row">
-                <span style="color:var(--muted)">Toplam Maliyet</span>
+                <span style="color:var(--muted)">Total Cost</span>
                 <strong id="rcpTotalCost">-</strong>
             </div>
             <div class="receipt-row">
-                <span style="color:var(--muted)">Ödenen Depozito</span>
+                <span style="color:var(--muted)">Deposit Paid</span>
                 <strong id="rcpDepositPaid">-</strong>
             </div>
-            
+
             <div style="margin-top:24px; padding:16px; border-radius:8px;" id="rcpExtraArea">
-                <div style="font-size:14px; margin-bottom:4px;" id="rcpExtraLabel">EK İŞLEM</div>
+                <div style="font-size:14px; margin-bottom:4px;" id="rcpExtraLabel">EXTRA CHARGE</div>
                 <div style="font-size:28px; font-weight:700;" id="rcpExtraAmount">-</div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; margin-top:24px;" onclick="window.location.href='dashboard.html'">
-                Panele Dön
+            <button class="btn btn-primary" style="width:100%; margin-top:24px;"
+                onclick="window.location.href='dashboard.html'">
+                Return to Dashboard
             </button>
         </div>
     </div>
@@ -454,7 +524,7 @@
     <script src="js/app.js"></script>
     <script src="js/charging.js"></script>
     <script src="js/reservation.js"></script>
-    
+
     <script>
         let activeReservations = [];
 
@@ -463,28 +533,28 @@
             if (!user) return;
             App.renderNavbar('charging');
 
-            // Bekleyen bir şarj var mı kontrol et (Sayfa yenilendiğinde veya başka sayfadan dönüldüğünde)
+            // Check if there is a pending charge (when the page is refreshed or returned from another page)
             try {
                 const sessionsRes = await API.get('/sessions');
                 const activeSession = sessionsRes.sessions.find(s => s.status === 'charging');
-                
+
                 if (activeSession) {
                     await resumeChargingSession(activeSession);
                     return;
                 }
             } catch (err) {
-                console.error("Şarj geçmişi alınamadı", err);
+                console.error("Failed to fetch charging history", err);
             }
 
             await loadReservations();
         })();
 
         async function resumeChargingSession(sessionData) {
-            // Şarjın UI'a geri yüklenmesi
+            // Charging UI recovery
             document.getElementById('setupArea').style.display = 'none';
             document.getElementById('chargingArea').style.display = 'grid';
             document.getElementById('batteryContainer').classList.add('charging');
-            
+
             document.getElementById('startBtn').disabled = true;
 
             // Bilgileri doldur
@@ -515,12 +585,12 @@
                 batteryCapacity: sessionData.battery_capacity || 60,
                 maxChargeRate: sessionData.max_charge_rate || 50
             };
-            
+
             Charging.activeSession.actualChargeRate = Math.min(
                 Charging.activeSession.chargerPower,
                 Charging.activeSession.maxChargeRate
             );
-            
+
             Charging.startedAt = new Date(sessionData.start_time).getTime();
 
             // Geçen süre üzerinden güncel bataryayı tahmin et (Hızlı ileri sarma - Fast Forward)
@@ -531,13 +601,13 @@
             // Burada elapsed time gerçek hayattaki zaman. 
             // Bizim simülasyonumuz: setInterval(1000ms -> SIM_MINUTES_PER_TICK = 1 dk)
             // Yani simülasyondaki zaman = gerçek zaman saniyesi KADAR dakika geçmiş gibi hesaplanıyor.
-            const simulationTicksPassed = Math.floor(diffMs / 1000); 
-            
+            const simulationTicksPassed = Math.floor(diffMs / 1000);
+
             let simulatedEnergy = 0;
             let currentBattery = sessionData.battery_start;
-            
+
             // Simülasyonu hızlıca baştan sona çalıştır
-            for(let i=0; i<simulationTicksPassed; i++) {
+            for (let i = 0; i < simulationTicksPassed; i++) {
                 let currentRate = Charging.activeSession.actualChargeRate;
                 if (currentBattery > 80) {
                     const factor = 1 - 0.75 * ((currentBattery - 80) / 20);
@@ -581,7 +651,7 @@
                 const select = document.getElementById('resSelect');
 
                 if (activeReservations.length === 0) {
-                    select.innerHTML = '<option value="">Aktif rezervasyonunuz yok.</option>';
+                    select.innerHTML = '<option value="">No active reservations.</option>';
                     document.getElementById('startBtn').disabled = true;
                     return;
                 }
@@ -598,7 +668,7 @@
                     select.value = params.get('rid');
                 }
             } catch (err) {
-                App.showToast('Rezervasyonlar yüklenemedi: ' + err.message, 'error');
+                App.showToast('Failed to load reservations: ' + err.message, 'error');
             }
         }
 
@@ -608,38 +678,38 @@
 
             if (!resId) return;
             if (isNaN(startBat) || startBat < 0 || startBat >= 100) {
-                App.showToast('Geçerli bir batarya yüzdesi girin (0-99)', 'error');
+                App.showToast('Enter a valid battery percentage (0-99)', 'error');
                 return;
             }
 
             const btn = document.getElementById('startBtn');
             btn.disabled = true;
-            btn.textContent = 'Başlatılıyor...';
+            btn.textContent = 'Starting...';
 
             const res = await Charging.startSession(Number(resId), startBat);
 
             if (!res.success) {
-                // Şarj cihazı müsait değilse alternatif öneri kontrolü
+                // Check for alternatives if the charging device is not available
                 const reservation = activeReservations.find(r => String(r.id) === resId);
                 let altMsg = '';
                 try {
                     const altData = await API.getAlternatives(Number(resId));
                     if (altData.is_unavailable && altData.total_alternatives > 0) {
-                        altMsg = ` (${altData.total_alternatives} alternatif mevcut)`;
-                        App.showToast(`⚠️ ${res.message}${altMsg} — Panelden alternatif bulabilirsiniz.`, 'error');
+                        altMsg = ` (${altData.total_alternatives} alternatives available)`;
+                        App.showToast(`⚠️ ${res.message}${altMsg} — You can find alternatives on the panel.`, 'error');
                         btn.disabled = false;
-                        btn.innerHTML = '🔄 <a href="dashboard.html" style="color:inherit;">Panele Git — Alternatif Bul</a>';
+                        btn.innerHTML = '🔄 <a href="dashboard.html" style="color:inherit;">Return to Panel — Find Alternative</a>';
                         return;
                     }
                 } catch (e) { /* ignore */ }
 
                 App.showToast(res.message, 'error');
                 btn.disabled = false;
-                btn.textContent = 'Şarjı Başlat';
+                btn.textContent = 'Start Charging';
                 return;
             }
 
-            // Ekranları değiştir
+            // Switch screens
             document.getElementById('setupArea').style.display = 'none';
             document.getElementById('chargingArea').style.display = 'grid';
             document.getElementById('batteryContainer').classList.add('charging');
@@ -681,7 +751,7 @@
         function updateUI(session) {
             const level = document.getElementById('batteryLevel');
             const text = document.getElementById('batteryText');
-            
+
             // Renk geçişi (Kırmızı -> Sarı -> Yeşil)
             let color = 'var(--danger)';
             if (session.batteryPercent > 20) color = 'var(--warning)';
@@ -712,22 +782,22 @@
             document.getElementById('batteryContainer').classList.remove('charging');
 
             if (session.balanceDepleted) {
-                document.getElementById('statusText').textContent = '⚠️ Bakiye Tükendi — Şarj Durduruldu';
+                document.getElementById('statusText').textContent = '⚠️ Balance Depleted — Charging Stopped';
                 document.getElementById('statusText').style.color = 'var(--warning)';
-                document.getElementById('liveRemaining').textContent = 'Bakiye bitti';
-                App.showToast('Cüzdan bakiyeniz tükendiği için şarj işlemi otomatik olarak durduruldu.', 'error');
+                document.getElementById('liveRemaining').textContent = 'Balance Depleted';
+                App.showToast('Your wallet balance has been depleted, so the charging process has been automatically stopped.', 'error');
             } else {
-                document.getElementById('statusText').textContent = '✅ Şarj Tamamlandı';
+                document.getElementById('statusText').textContent = '✅ Charging Completed';
                 document.getElementById('statusText').style.color = 'var(--text)';
-                document.getElementById('liveRemaining').textContent = 'Tamamlandı';
+                document.getElementById('liveRemaining').textContent = 'Completed';
             }
 
-            // Durdur butonunu devre dışı bırak
+            // Disable stop button
             const stopBtn = document.getElementById('stopBtn');
             stopBtn.disabled = true;
-            stopBtn.textContent = session.balanceDepleted ? '⚠️ Bakiye Tükendi' : '✅ Tamamlandı';
+            stopBtn.textContent = session.balanceDepleted ? '⚠️ Balance Depleted' : '✅ Completed';
 
-            // Geçen süre sayacını durdur
+            // Stop elapsed time counter
             if (window._elapsedTimer) {
                 clearInterval(window._elapsedTimer);
                 window._elapsedTimer = null;
@@ -740,7 +810,7 @@
         async function stopCharging() {
             const btn = document.getElementById('stopBtn');
             btn.disabled = true;
-            btn.textContent = 'Durduruluyor...';
+            btn.textContent = 'Stopping...';
 
             const session = await Charging.stopSession();
             if (session) {
@@ -751,30 +821,30 @@
 
         function showReceipt(session) {
             const receipt = Charging.generateReceipt(session);
-            
+
             document.getElementById('rcpNo').textContent = receipt.receiptNo;
             document.getElementById('rcpEnergy').textContent = receipt.energyConsumed;
             document.getElementById('rcpPrice').textContent = receipt.pricePerKwh;
-            
+
             document.getElementById('rcpTotalCost').textContent = receipt.totalCost || (session.cost.toFixed(2) + ' ₺');
             document.getElementById('rcpDepositPaid').textContent = receipt.depositPaid || '0.00 ₺';
-            
+
             const extraLabel = document.getElementById('rcpExtraLabel');
             const extraAmount = document.getElementById('rcpExtraAmount');
             const extraArea = document.getElementById('rcpExtraArea');
-            
+
             if (receipt.depositRefund && receipt.depositRefund !== '0.00 ₺') {
-                extraLabel.textContent = 'İADE EDİLEN TUTAR';
+                extraLabel.textContent = 'DEPOSIT REFUNDED';
                 extraLabel.style.color = 'var(--green)';
                 extraArea.style.background = 'rgba(0,229,160,.1)';
                 extraAmount.textContent = receipt.depositRefund;
             } else if (receipt.extraDeducted && receipt.extraDeducted !== '0.00 ₺') {
-                extraLabel.textContent = 'EK KESİNTİ';
+                extraLabel.textContent = 'EXTRA DEDUCTION';
                 extraLabel.style.color = 'var(--danger)';
                 extraArea.style.background = 'rgba(255, 71, 87, .1)';
                 extraAmount.textContent = receipt.extraDeducted;
             } else {
-                extraLabel.textContent = 'EK İŞLEM YOK';
+                extraLabel.textContent = 'NO EXTRA CHARGE';
                 extraLabel.style.color = 'var(--muted)';
                 extraArea.style.background = 'rgba(255, 255, 255, 0.05)';
                 extraAmount.textContent = '0.00 ₺';
@@ -787,4 +857,5 @@
         }
     </script>
 </body>
+
 </html>

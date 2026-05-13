@@ -8,7 +8,7 @@ require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const db = require('./db');
 
-console.log('🌱 Veritabanı seed başlıyor...\n');
+console.log('🌱 Begin database seed...\n');
 
 // ══════════════════════════════════════
 //  DEMO KULLANICI
@@ -17,10 +17,10 @@ console.log('🌱 Veritabanı seed başlıyor...\n');
 const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get('test@evcharge.com');
 if (!existingUser) {
     const hash = bcrypt.hashSync('Sarj2024', 10);
-    db.prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)').run('Test Kullanıcı', 'test@evcharge.com', hash);
-    console.log('✅ Demo kullanıcı oluşturuldu: test@evcharge.com / Sarj2024');
+    db.prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)').run('Test User', 'test@evcharge.com', hash);
+    console.log('✅ Demo user created: test@evcharge.com / Sarj2024');
 } else {
-    console.log('ℹ️  Demo kullanıcı zaten mevcut.');
+    console.log('ℹ️  Demo user already exists.');
 }
 
 // ══════════════════════════════════════
@@ -100,14 +100,14 @@ if (existingStations.count === 0) {
             for (const ch of st.chargers) {
                 insertCharger.run(stationId, ch.type, ch.power, ch.connectorType, ch.pricePerKwh, ch.status);
             }
-            console.log(`  📍 ${st.name} — ${st.chargers.length} şarj ünitesi`);
+            console.log(`  📍 ${st.name} — ${st.chargers.length} charger units`);
         }
     });
 
     seedAll();
-    console.log(`\n✅ ${stations.length} istasyon oluşturuldu.`);
+    console.log(`\n✅ ${stations.length} stations created.`);
 } else {
-    console.log('ℹ️  İstasyonlar zaten mevcut.');
+    console.log('ℹ️  Stations already exist.');
 }
 
-console.log('\n🎉 Seed tamamlandı!\n');
+console.log('\n🎉 Seed completed!\n');

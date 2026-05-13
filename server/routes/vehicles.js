@@ -29,12 +29,12 @@ router.get('/', (req, res) => {
 //  POST /api/vehicles
 // ══════════════════════════════════════
 router.post('/', [
-    body('brand').trim().notEmpty().withMessage('Marka gereklidir.'),
-    body('model').trim().notEmpty().withMessage('Model gereklidir.'),
-    body('batteryCapacity').isFloat({ min: 1 }).withMessage('Geçerli batarya kapasitesi giriniz.'),
-    body('connectorType').isIn(['Type 2', 'CCS', 'CHAdeMO']).withMessage('Geçerli konnektör tipi seçiniz.'),
-    body('maxChargeRate').isFloat({ min: 1 }).withMessage('Geçerli şarj hızı giriniz.'),
-    body('plateNumber').trim().matches(/^(0[1-9]|[1-7][0-9]|8[01])\s?[a-zA-Z]{1,3}\s?\d{2,4}$/).withMessage('Lütfen geçerli bir Türkiye plakası giriniz (Örn: 34 ABC 123).'),
+    body('brand').trim().notEmpty().withMessage('Brand is required.'),
+    body('model').trim().notEmpty().withMessage('Model is required.'),
+    body('batteryCapacity').isFloat({ min: 1 }).withMessage('Please enter a valid battery capacity.'),
+    body('connectorType').isIn(['Type 2', 'CCS', 'CHAdeMO']).withMessage('Please select a valid connector type.'),
+    body('maxChargeRate').isFloat({ min: 1 }).withMessage('Please enter a valid charge rate.'),
+    body('plateNumber').trim().matches(/^(0[1-9]|[1-7][0-9]|8[01])\s?[a-zA-Z]{1,3}\s?\d{2,4}$/).withMessage('Please enter a valid Turkish license plate (e.g., 34 ABC 123).'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -50,7 +50,7 @@ router.post('/', [
 
     const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(result.lastInsertRowid);
 
-    res.status(201).json({ message: 'Araç eklendi.', vehicle });
+    res.status(201).json({ message: 'Vehicle added successfully.', vehicle });
 });
 
 // ══════════════════════════════════════
@@ -62,10 +62,10 @@ router.delete('/:id', (req, res) => {
     ).get(req.params.id, req.user.id);
 
     if (!vehicle) {
-        return res.status(404).json({ error: 'Araç bulunamadı veya size ait değil.' });
+        return res.status(404).json({ error: 'Vehicle not found or not owned by you.' });
     }
 
-    // Aktif rezervasyon kontrolü
+    // Active reservation check
     const activeReservations = db.prepare(
         `SELECT r.*, c.power, c.price_per_kwh
          FROM reservations r
@@ -75,13 +75,13 @@ router.delete('/:id', (req, res) => {
 
     if (activeReservations.length > 0 && req.query.force !== 'true') {
         return res.status(409).json({
-            error: `Bu araca bağlı ${activeReservations.length} aktif rezervasyonunuz var. Aracı silerseniz bu rezervasyonlar iptal politikasına göre otomatik olarak iptal edilecektir.`,
+            error: `This vehicle has ${activeReservations.length} active reservations. If you delete this vehicle, these reservations will be automatically cancelled according to the cancellation policy.`,
             activeCount: activeReservations.length,
             requiresForce: true
         });
     }
 
-    // force=true ise: Aktif rezervasyonları iade kurallarına göre iptal et ve aracı sil
+    // If force=true: Cancel active reservations according to refund rules and delete the vehicle
     try {
         db.transaction(() => {
             const now = new Date();
@@ -119,13 +119,13 @@ router.delete('/:id', (req, res) => {
             db.prepare('DELETE FROM vehicles WHERE id = ?').run(req.params.id);
         })();
     } catch (e) {
-        return res.status(500).json({ error: 'Araç silinirken bir hata oluştu.' });
+        return res.status(500).json({ error: 'An error occurred while deleting the vehicle.' });
     }
 
     const cancelledCount = activeReservations.length;
     const msg = cancelledCount > 0
-        ? `Araç silindi. ${cancelledCount} aktif rezervasyon iptal edildi ve iade kurallarına göre bakiyenize yansıtıldı.`
-        : 'Araç silindi.';
+        ? `Vehicle deleted. ${cancelledCount} active reservations were cancelled and refunded according to the policy.`
+        : 'Vehicle deleted.';
 
     res.json({ message: msg });
 });

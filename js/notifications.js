@@ -11,13 +11,13 @@ const Notifications = {
         if (!user) return;
 
         App.renderNavbar('notifications');
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const urlId = urlParams.get('id');
         if (urlId) {
             this._selectedId = parseInt(urlId, 10);
         }
-        
+
         await this.loadNotifications();
 
         if (this._selectedId) {
@@ -27,25 +27,25 @@ const Notifications = {
 
     async loadNotifications() {
         const listContainer = document.getElementById('notifList');
-        listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">Yükleniyor...</div>';
+        listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">Loading...</div>';
 
         try {
             this._allNotifs = await API.getNotifications();
             this.renderList();
         } catch (err) {
-            listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--danger);">Bildirimler yüklenemedi.</div>';
-            console.error('Bildirim yükleme hatası:', err);
+            listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--danger);">Notifications could not be loaded.</div>';
+            console.error('Notification loading error:', err);
         }
     },
 
     renderList() {
         const listContainer = document.getElementById('notifList');
-        
+
         if (this._allNotifs.length === 0) {
             listContainer.innerHTML = `
                 <div style="padding:32px 20px; text-align:center; color:var(--muted);">
                     <div style="font-size:32px; margin-bottom:12px;">📭</div>
-                    Henüz hiç bildiriminiz yok.
+                    You don't have any notifications yet.
                 </div>
             `;
             return;
@@ -69,8 +69,8 @@ const Notifications = {
         }).join('');
 
         listContainer.innerHTML = html;
-        
-        // Eğer seçili bir id varsa detaylarını render et
+
+        // If a selected id exists, render its details
         if (this._selectedId) {
             this.renderDetail();
         } else {
@@ -80,11 +80,11 @@ const Notifications = {
 
     async selectNotification(id) {
         this._selectedId = id;
-        
-        // Listede aktif olanı güncelle (hızlı görsel geribildirim için)
+
+        // Update the active one in the list (for quick visual feedback)
         this.renderList();
-        
-        // Detayı göster
+
+        // Show the detail
         this.renderDetail();
 
         // Eğer okunmamışsa API'ye okundu bilgisini gönder
@@ -94,13 +94,13 @@ const Notifications = {
                 await API.markNotificationRead(id);
                 notif.is_read = 1;
                 this.renderList(); // Rozeti (yeşil nokta) kaldırmak için listeyi tekrar renderla
-                
-                // Navbar'daki global bildirim sayısını da güncelle
+
+                // Update the global notification count in the Navbar
                 if (window.App && typeof App.updateNotificationCount === 'function') {
                     App.updateNotificationCount();
                 }
             } catch (err) {
-                console.error('Okundu işaretleme hatası:', err);
+                console.error('Mark read error:', err);
             }
         }
     },
@@ -114,23 +114,23 @@ const Notifications = {
 
         document.getElementById('detailEmptyState').classList.remove('show');
         document.getElementById('detailEmptyState').style.display = 'none';
-        
+
         const detailContent = document.getElementById('detailContent');
         detailContent.style.display = 'block';
 
         const styleInfo = this.getNotifIcon(notif.type);
-        
+
         const iconEl = document.getElementById('detailIcon');
         iconEl.innerHTML = styleInfo.icon;
         iconEl.className = 'detail-icon ' + styleInfo.cls;
 
         document.getElementById('detailTitle').textContent = notif.title;
-        
-        const dateStr = new Date(notif.created_at).toLocaleString('tr-TR', { 
+
+        const dateStr = new Date(notif.created_at).toLocaleString('tr-TR', {
             year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         document.getElementById('detailDate').textContent = dateStr;
-        
+
         document.getElementById('detailMessage').innerHTML = `<p>${notif.message}</p>`;
     },
 
@@ -147,29 +147,29 @@ const Notifications = {
 
         try {
             await API.markAllNotificationsRead();
-            
+
             // Tüm notifleri lokalde okundu işaretle
             this._allNotifs.forEach(n => n.is_read = 1);
             this.renderList();
-            
+
             // Global güncelleme
             if (window.App && typeof App.updateNotificationCount === 'function') {
                 App.updateNotificationCount();
             }
-            
-            App.showToast('Tüm bildirimler okundu olarak işaretlendi.');
+
+            App.showToast('All notifications marked as read.');
         } catch (err) {
-            App.showToast('İşlem başarısız.', 'error');
+            App.showToast('Operation failed.', 'error');
         }
     },
 
     getNotifIcon(type) {
         const map = {
-            'reservation_created':   { icon: '📅', cls: 'created' },
+            'reservation_created': { icon: '📅', cls: 'created' },
             'reservation_cancelled': { icon: '❌', cls: 'cancelled' },
-            'station_offline':       { icon: '⚠️', cls: 'offline' },
-            'admin_cancelled':       { icon: '🛡️', cls: 'admin' },
-            'wallet_topup':          { icon: '💰', cls: 'topup' },
+            'station_offline': { icon: '⚠️', cls: 'offline' },
+            'admin_cancelled': { icon: '🛡️', cls: 'admin' },
+            'wallet_topup': { icon: '💰', cls: 'topup' },
         };
         return map[type] || { icon: '🔔', cls: 'created' };
     }

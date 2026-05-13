@@ -1,6 +1,6 @@
 /**
- * EVCharge — Express Sunucu
- * Ana giriş noktası: middleware, route'lar ve static dosya sunumu.
+ * EVCharge — Express Server
+ * Main entry point: middleware, routes, and static file serving.
  */
 
 require('dotenv').config();
@@ -43,7 +43,7 @@ app.use(express.json({ limit: '1mb' }));
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 1000,
-    message: { error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.' },
+    message: { error: 'Too many requests. Please try again after 15 minutes.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -53,7 +53,7 @@ app.use('/api/', generalLimiter);
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 50,
-    message: { error: 'Çok fazla giriş denemesi. Lütfen 15 dakika sonra tekrar deneyin.' },
+    message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -110,25 +110,25 @@ app.get('*', (req, res) => {
 
 // 404 — API route bulunamadı
 app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: 'Endpoint bulunamadı.' });
+    res.status(404).json({ error: 'Endpoint not found.' });
 });
 
 // Genel hata yakalayıcı
 app.use((err, req, res, next) => {
-    console.error('Sunucu hatası:', err.stack);
-    res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+    console.error('Server error:', err.stack);
+    res.status(500).json({ error: 'Server error occurred.' });
 });
 
 // ══════════════════════════════════════
-//  SUNUCUYU BAŞLAT
+//  START SERVER
 // ══════════════════════════════════════
 
 app.listen(PORT, () => {
-    console.log(`\n⚡ EVCharge Backend çalışıyor: http://localhost:${PORT}`);
-    console.log(`📁 Frontend sunuluyor: http://localhost:${PORT}/login.html`);
+    console.log(`\n⚡ EVCharge Backend running: http://localhost:${PORT}`);
+    console.log(`📁 Frontend served at: http://localhost:${PORT}/login.html`);
     console.log(`🔌 API: http://localhost:${PORT}/api\n`);
-    
-    // Arka plan servislerini başlat
+
+    // Initialize background services
     const initNoShowCron = require('./utils/noShowCron');
     initNoShowCron();
 });

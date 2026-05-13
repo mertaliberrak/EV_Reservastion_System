@@ -69,7 +69,7 @@ const Charging = {
         }
         const s = this.activeSession;
         const remainingPercent = s.targetBattery - s.batteryPercent;
-        if (remainingPercent <= 0) return { minutes: 0, text: 'Tamamlandı' };
+        if (remainingPercent <= 0) return { minutes: 0, text: 'Completed' };
 
         // Kalan enerji (kWh) = batarya kapasitesi × kalan yüzde / 100
         const remainingEnergy = s.batteryCapacity * (remainingPercent / 100);
@@ -87,9 +87,9 @@ const Charging = {
         if (totalMinutes >= 60) {
             const hrs = Math.floor(totalMinutes / 60);
             const mins = totalMinutes % 60;
-            return { minutes: totalMinutes, text: `~${hrs} sa ${mins} dk` };
+            return { minutes: totalMinutes, text: `~${hrs} h ${mins} m` };
         }
-        return { minutes: totalMinutes, text: `~${totalMinutes} dk` };
+        return { minutes: totalMinutes, text: `~${totalMinutes} m` };
     },
 
     // ── Canlı izleme simülasyonu (EV-16) — gerçekçi fizik ──
@@ -97,7 +97,7 @@ const Charging = {
         if (!this.activeSession) return;
 
         const TICK_MS = 1000; // Her 1 saniyede bir güncelle
-        
+
         this.timer = setInterval(() => {
             if (!this.activeSession || this.activeSession.status !== 'charging') {
                 clearInterval(this.timer);
@@ -183,7 +183,7 @@ const Charging = {
             this.activeSession.receipt = data.receipt;
             return this.activeSession;
         } catch (err) {
-            console.error('Oturum kaydedilemedi:', err);
+            console.error('Failed to save session:', err);
             return this.activeSession;
         }
     },

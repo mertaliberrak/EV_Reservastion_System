@@ -55,17 +55,17 @@ router.get('/recommend', (req, res) => {
     const { lat, lng, vehicle_id, max_distance_km } = req.query;
 
     if (!lat || !lng) {
-        return res.status(400).json({ error: 'Enlem (lat) ve boylam (lng) parametreleri zorunludur.' });
+        return res.status(400).json({ error: 'Latitude (lat) and longitude (lng) parameters are required.' });
     }
 
     const userLat = parseFloat(lat);
     const userLng = parseFloat(lng);
     const maxDist = max_distance_km ? parseFloat(max_distance_km) : null;
 
-    // Ağırlık katsayıları (mesafe=0.40, fiyat=0.30, müsaitlik=0.30)
+    // Weight coefficients (distance=0.40, price=0.30, availability=0.30)
     const weights = { distance: 0.40, price: 0.30, availability: 0.30 };
 
-    // Araç bilgisi varsa soket tipini al
+    // If there is vehicle information, get the socket type
     let userVehicle = null;
     if (vehicle_id) {
         userVehicle = db.prepare(
@@ -101,7 +101,7 @@ router.get('/recommend', (req, res) => {
         // 5. En iyi şarj cihazı
         const bestCharger = availableChargers.reduce((best, c) =>
             c.price_per_kwh < best.price_per_kwh ? c : best
-        , availableChargers[0]);
+            , availableChargers[0]);
 
         candidates.push({
             id: station.id,
@@ -132,21 +132,21 @@ router.get('/recommend', (req, res) => {
             recommendations: [],
             vehicle: userVehicle || null,
             weights,
-            message: 'Kriterlere uygun istasyon bulunamadı.',
+            message: 'No stations found matching the criteria.',
         });
     }
 
-    // ── Normalizasyon ──
-    const dists  = candidates.map(c => c.distance_km);
+    // Normalization
+    const dists = candidates.map(c => c.distance_km);
     const prices = candidates.map(c => c.min_price);
     const avails = candidates.map(c => c.available_chargers_count);
 
-    const minDistV  = Math.min(...dists);
-    const maxDistV  = Math.max(...dists);
+    const minDistV = Math.min(...dists);
+    const maxDistV = Math.max(...dists);
     const minPriceV = Math.min(...prices);
     const maxPriceV = Math.max(...prices);
-    const minAvail  = Math.min(...avails);
-    const maxAvail  = Math.max(...avails);
+    const minAvail = Math.min(...avails);
+    const maxAvail = Math.max(...avails);
 
     function normalize(val, min, max, invert = false) {
         if (max === min) return 1;
@@ -154,20 +154,20 @@ router.get('/recommend', (req, res) => {
         return invert ? (1 - norm) : norm;
     }
 
-    // ── Skor hesapla (0-100, yüksek = daha iyi) ──
+    // Calculate Score (0-100, higher = better)
     candidates.forEach(c => {
-        const distScore  = normalize(c.distance_km, minDistV, maxDistV, true);
+        const distScore = normalize(c.distance_km, minDistV, maxDistV, true);
         const priceScore = normalize(c.min_price, minPriceV, maxPriceV, true);
         const availScore = normalize(c.available_chargers_count, minAvail, maxAvail, false);
 
         const rawScore = (distScore * weights.distance)
-                       + (priceScore * weights.price)
-                       + (availScore * weights.availability);
+            + (priceScore * weights.price)
+            + (availScore * weights.availability);
 
         c.recommendation_score = Math.round(rawScore * 100);
         c.score_details = {
-            distance_score:     Math.round(distScore * 100),
-            price_score:        Math.round(priceScore * 100),
+            distance_score: Math.round(distScore * 100),
+            price_score: Math.round(priceScore * 100),
             availability_score: Math.round(availScore * 100),
         };
     });
@@ -193,7 +193,7 @@ router.get('/:id', (req, res) => {
     const station = db.prepare('SELECT * FROM stations WHERE id = ?').get(req.params.id);
 
     if (!station) {
-        return res.status(404).json({ error: 'İstasyon bulunamadı.' });
+        return res.status(404).json({ error: 'Station not found.' });
     }
 
     attachChargers(station);

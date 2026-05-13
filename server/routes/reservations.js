@@ -1,8 +1,8 @@
 /**
  * EVCharge — Reservation Routes
- * GET    /api/reservations     — Kullanıcının rezervasyonları
- * POST   /api/reservations     — Yeni rezervasyon (çakışma + uyumluluk kontrolü)
- * DELETE /api/reservations/:id — Rezervasyon iptal
+ * GET    /api/reservations     — User's reservations
+ * POST   /api/reservations     — New reservation (conflict + compatibility check)
+ * DELETE /api/reservations/:id — Cancel reservation
  */
 
 const express = require('express');
@@ -56,12 +56,12 @@ router.get('/charger/:chargerId/availability', (req, res) => {
 //  POST /api/reservations
 // ══════════════════════════════════════
 router.post('/', [
-    body('stationId').isInt().withMessage('İstasyon ID gerekli.'),
-    body('chargerId').isInt().withMessage('Şarj ünitesi ID gerekli.'),
-    body('vehicleId').isInt().withMessage('Araç ID gerekli.'),
-    body('date').notEmpty().withMessage('Tarih gerekli.'),
-    body('startSlot').notEmpty().withMessage('Başlangıç saati gerekli.'),
-    body('endSlot').notEmpty().withMessage('Bitiş saati gerekli.'),
+    body('stationId').isInt().withMessage('Station ID is required.'),
+    body('chargerId').isInt().withMessage('Charger ID is required.'),
+    body('vehicleId').isInt().withMessage('Vehicle ID is required.'),
+    body('date').notEmpty().withMessage('Date is required.'),
+    body('startSlot').notEmpty().withMessage('Start time is required.'),
+    body('endSlot').notEmpty().withMessage('End time is required.'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -75,7 +75,7 @@ router.post('/', [
         'SELECT * FROM vehicles WHERE id = ? AND user_id = ?'
     ).get(vehicleId, req.user.id);
     if (!vehicle) {
-        return res.status(404).json({ error: 'Araç bulunamadı veya size ait değil.' });
+        return res.status(404).json({ error: 'Vehicle not found or not owned by you.' });
     }
 
     // 2. Şarj ünitesi var mı?
@@ -83,21 +83,21 @@ router.post('/', [
         'SELECT * FROM chargers WHERE id = ? AND station_id = ?'
     ).get(chargerId, stationId);
     if (!charger) {
-        return res.status(404).json({ error: 'Şarj ünitesi bulunamadı.' });
+        return res.status(404).json({ error: 'Charger not found.' });
     }
 
     // Çevrimdışı veya kullanımda kontrolü
     if (charger.status === 'offline') {
-        return res.status(400).json({ error: 'Bu şarj ünitesi şu anda çevrimdışı.' });
+        return res.status(400).json({ error: 'This charger is currently offline.' });
     }
     if (charger.status === 'occupied') {
-        return res.status(400).json({ error: 'Bu şarj ünitesi şu anda başka bir kullanıcı tarafından kullanılıyor.' });
+        return res.status(400).json({ error: 'This charger is currently being used by another user.' });
     }
 
     // 3. Araç-şarj uyumluluk kontrolü (EV-13)
     if (vehicle.connector_type !== charger.connector_type) {
         return res.status(400).json({
-            error: `Uyumsuz konnektör: Aracınız ${vehicle.connector_type}, şarj ünitesi ${charger.connector_type}.`
+            error: `Connector type mismatch: Your vehicle has a ${vehicle.connector_type} connector, while the charging unit has a ${charger.connector_type} connector.`
         });
     }
 
@@ -107,10 +107,10 @@ router.post('/', [
     const diffMins = (reservationStart - now) / (1000 * 60);
 
     if (diffMins < 0) {
-        return res.status(400).json({ error: 'Geçmiş bir zamana rezervasyon yapılamaz.' });
+        return res.status(400).json({ error: 'Cannot reserve a past time.' });
     }
     if (diffMins > 24 * 60) {
-        return res.status(400).json({ error: 'Sadece önümüzdeki 24 saat için rezervasyon yapılabilir.' });
+        return res.status(400).json({ error: 'Only the next 24 hours can be reserved.' });
     }
 
     function timeToMins(t) {
@@ -128,10 +128,10 @@ router.post('/', [
     // Süre kısıtlamaları kontrolü (Min 15, Max 120 dk)
     const durationMins = newEndMins - newStartMins;
     if (durationMins < 15) {
-        return res.status(400).json({ error: 'Rezervasyon süresi en az 15 dakika olmalıdır.' });
+        return res.status(400).json({ error: 'Reservation duration must be at least 15 minutes.' });
     }
     if (durationMins > 120) {
-        return res.status(400).json({ error: 'Rezervasyon süresi en fazla 2 saat (120 dakika) olabilir.' });
+        return res.status(400).json({ error: 'Reservation duration cannot exceed 2 hours (120 minutes).' });
     }
 
     // 3.5. 24 saatlik pencerede toplam süre limiti kontrolü (Maks. 120 dk / 24 saat / kullanıcı)
@@ -168,7 +168,7 @@ router.post('/', [
     if (totalExistingMins + durationMins > 120) {
         const remainingMins = Math.max(0, 120 - totalExistingMins);
         return res.status(400).json({
-            error: `24 saat içindeki toplam rezervasyon süreniz en fazla 2 saat (120 dakika) olabilir. Kalan süreniz: ${remainingMins} dakika.`
+            error: `Total reservation time within 24 hours cannot exceed 2 hours (120 minutes). Your remaining time: ${remainingMins} minutes.`
         });
     }
 
@@ -183,7 +183,7 @@ router.post('/', [
         const bStartMins = timeToMins(r.start_slot);
         let bEndMins = timeToMins(r.end_slot);
         if (bEndMins <= bStartMins) bEndMins += 24 * 60;
-        
+
         // 15 dakika boşluk kuralı için mevcut rezervasyonu 15 dk genişletiyoruz
         if (Math.max(bStartMins - 15, newStartMins) < Math.min(bEndMins + 15, newEndMins)) {
             isConflict = true;
@@ -192,7 +192,7 @@ router.post('/', [
     }
 
     if (isConflict) {
-        return res.status(409).json({ error: 'Bu saat dilimi dolu veya iki rezervasyon arasında en az 15 dakika boşluk olmalıdır.' });
+        return res.status(409).json({ error: 'This time slot is occupied or there must be at least 15 minutes between two reservations.' });
     }
 
     // 5. Çifte Rezervasyon Kontrolü (Aynı kullanıcının aynı saatte başka rezervasyonu var mı?)
@@ -214,7 +214,7 @@ router.post('/', [
     }
 
     if (userConflict) {
-        return res.status(409).json({ error: 'Bu saat diliminde zaten başka bir aktif rezervasyonunuz bulunuyor.' });
+        return res.status(409).json({ error: 'You already have another active reservation in this time slot.' });
     }
 
     // 6. Cüzdan Bakiyesi Kontrolü
@@ -224,8 +224,8 @@ router.post('/', [
 
     const userRow = db.prepare('SELECT balance FROM users WHERE id = ?').get(req.user.id);
     if (!userRow || userRow.balance < estimatedCost) {
-        return res.status(402).json({ 
-            error: `Bakiyeniz yetersiz. Tahmini tutar: ${estimatedCost.toFixed(2)} ₺, Bakiyeniz: ${userRow ? userRow.balance.toFixed(2) : 0} ₺` 
+        return res.status(402).json({
+            error: `Insufficient balance. Estimated cost: ${estimatedCost.toFixed(2)} ₺, Your balance: ${userRow ? userRow.balance.toFixed(2) : 0} ₺`
         });
     }
 
@@ -237,13 +237,13 @@ router.post('/', [
                 `INSERT INTO reservations (user_id, station_id, charger_id, vehicle_id, date, start_slot, end_slot)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`
             ).run(req.user.id, stationId, chargerId, vehicleId, date, startSlot, endSlot);
-            
+
             db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(estimatedCost, req.user.id);
             return result.lastInsertRowid;
         });
         resId = insertTx();
     } catch (err) {
-        return res.status(500).json({ error: 'Rezervasyon oluşturulurken bir hata oluştu.' });
+        return res.status(500).json({ error: 'Failed to create reservation.' });
     }
 
     // Oluşturulan rezervasyonu detaylı getir
@@ -265,12 +265,12 @@ router.post('/', [
     createNotification(
         req.user.id,
         'reservation_created',
-        '📅 Rezervasyon Oluşturuldu',
-        `${reservation.station_name} istasyonunda ${date} tarihli ${startSlot} - ${endSlot} saatleri için rezervasyonunuz başarıyla oluşturuldu. Tahmini tutar: ${estimatedCost.toFixed(2)} ₺`,
+        '📅 Reservation Created',
+        `Your reservation at ${reservation.station_name} for ${date} from ${startSlot} to ${endSlot} has been successfully created. Estimated cost: ${estimatedCost.toFixed(2)} ₺`,
         { reservationId: resId, stationName: reservation.station_name }
     );
 
-    res.status(201).json({ message: 'Rezervasyon oluşturuldu.', reservation });
+    res.status(201).json({ message: 'Reservation created.', reservation });
 });
 
 // ── Mesafe Hesaplama (Haversine) ──
@@ -330,7 +330,7 @@ router.get('/:id/alternatives', (req, res) => {
     ).get(req.params.id, req.user.id);
 
     if (!reservation) {
-        return res.status(404).json({ error: 'Rezervasyon bulunamadı.' });
+        return res.status(404).json({ error: 'Reservation not found.' });
     }
 
     const charger = db.prepare('SELECT * FROM chargers WHERE id = ?').get(reservation.charger_id);
@@ -413,8 +413,8 @@ router.get('/:id/alternatives', (req, res) => {
 //  Rezervasyonu alternatif bir cihaza taşı
 // ══════════════════════════════════════
 router.post('/:id/switch', [
-    body('newChargerId').isInt().withMessage('Yeni şarj ünitesi ID gerekli.'),
-    body('newStationId').isInt().withMessage('Yeni istasyon ID gerekli.'),
+    body('newChargerId').isInt().withMessage('New charger ID required.'),
+    body('newStationId').isInt().withMessage('New station ID required.'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -434,7 +434,7 @@ router.post('/:id/switch', [
     ).get(req.params.id, req.user.id);
 
     if (!reservation) {
-        return res.status(404).json({ error: 'Aktif rezervasyon bulunamadı.' });
+        return res.status(404).json({ error: 'Active reservation not found.' });
     }
 
     // Yeni cihaz kontrolü
@@ -443,21 +443,21 @@ router.post('/:id/switch', [
     ).get(newChargerId, newStationId);
 
     if (!newCharger) {
-        return res.status(404).json({ error: 'Alternatif şarj ünitesi bulunamadı.' });
+        return res.status(404).json({ error: 'Alternative charger not found.' });
     }
 
     if (newCharger.status !== 'available') {
-        return res.status(400).json({ error: 'Alternatif şarj ünitesi şu anda müsait değil.' });
+        return res.status(400).json({ error: 'Alternative charger is currently unavailable.' });
     }
 
     // Uyumluluk kontrolü
     if (newCharger.connector_type !== reservation.vehicle_connector) {
-        return res.status(400).json({ error: 'Alternatif şarj ünitesi aracınızla uyumlu değil.' });
+        return res.status(400).json({ error: 'Alternative charger is not compatible with your vehicle.' });
     }
 
     // Zaman çakışması kontrolü
     if (hasTimeConflict(reservation.start_slot, reservation.end_slot, reservation.date, newChargerId)) {
-        return res.status(409).json({ error: 'Alternatif ünite bu saat diliminde dolu.' });
+        return res.status(409).json({ error: 'Alternative charger is occupied during this time slot.' });
     }
 
     // Fiyat farkı hesapla
@@ -481,7 +481,7 @@ router.post('/:id/switch', [
         const userRow = db.prepare('SELECT balance FROM users WHERE id = ?').get(req.user.id);
         if (!userRow || userRow.balance < priceDiff) {
             return res.status(402).json({
-                error: `Bakiye yetersiz. Fiyat farkı: ${priceDiff.toFixed(2)} ₺, Bakiyeniz: ${userRow ? userRow.balance.toFixed(2) : '0.00'} ₺`
+                error: `Insufficient balance. Price difference: ${priceDiff.toFixed(2)} ₺, Your balance: ${userRow ? userRow.balance.toFixed(2) : '0.00'} ₺`
             });
         }
     }
@@ -499,7 +499,7 @@ router.post('/:id/switch', [
             }
         })();
     } catch (e) {
-        return res.status(500).json({ error: 'Rezervasyon aktarımı sırasında hata oluştu.' });
+        return res.status(500).json({ error: 'Failed to switch reservation.' });
     }
 
     // Güncellenmiş rezervasyonu getir
@@ -513,7 +513,7 @@ router.post('/:id/switch', [
     ).get(req.params.id);
 
     res.json({
-        message: `Rezervasyon başarıyla aktarıldı! ${priceDiff > 0 ? `Fark: ${priceDiff.toFixed(2)} ₺ tahsil edildi.` : priceDiff < 0 ? `İade: ${Math.abs(priceDiff).toFixed(2)} ₺` : ''}`,
+        message: `Reservation switched successfully! ${priceDiff > 0 ? `Difference: ${priceDiff.toFixed(2)} ₺ charged.` : priceDiff < 0 ? `Refund: ${Math.abs(priceDiff).toFixed(2)} ₺` : ''}`,
         reservation: updated,
         price_difference: priceDiff,
     });
@@ -532,11 +532,11 @@ router.delete('/:id', (req, res) => {
     ).get(req.params.id, req.user.id);
 
     if (!reservation) {
-        return res.status(404).json({ error: 'Rezervasyon bulunamadı veya size ait değil.' });
+        return res.status(404).json({ error: 'Reservation not found or not yours.' });
     }
 
     if (reservation.status !== 'active') {
-        return res.status(400).json({ error: 'Sadece aktif rezervasyonlar iptal edilebilir.' });
+        return res.status(400).json({ error: 'Only active reservations can be cancelled.' });
     }
 
     // İptal Politikası: 1 Saat kala tam iade, aksi halde %50 iade. Geçmiş zamansa iade yok.
@@ -546,9 +546,9 @@ router.delete('/:id', (req, res) => {
 
     let refundRatio = 0;
     if (diffMins >= 60) {
-        refundRatio = 1.0; // %100 iade
+        refundRatio = 1.0; // 100% refund
     } else if (diffMins >= 0) {
-        refundRatio = 0.5; // %50 iade (Depozito kesintisi)
+        refundRatio = 0.5; // 50% refund (Deposit deduction)
     }
 
     function timeToMins(t) {
@@ -559,7 +559,7 @@ router.delete('/:id', (req, res) => {
     let endMins = timeToMins(reservation.end_slot);
     if (endMins <= startMins) endMins += 24 * 60;
     const durationHours = (endMins - startMins) / 60;
-    
+
     const actualPower = Math.min(reservation.power, reservation.max_charge_rate);
     const estimatedCost = durationHours * actualPower * reservation.price_per_kwh;
     const refundAmount = estimatedCost * refundRatio;
@@ -572,7 +572,7 @@ router.delete('/:id', (req, res) => {
             }
         })();
     } catch (e) {
-        return res.status(500).json({ error: 'İptal işlemi sırasında bir hata oluştu.' });
+        return res.status(500).json({ error: 'Failed to cancel reservation.' });
     }
 
     // Audit Log
@@ -583,12 +583,12 @@ router.delete('/:id', (req, res) => {
     createNotification(
         req.user.id,
         'reservation_cancelled',
-        '❌ Rezervasyon İptal Edildi',
-        `${stationInfo ? stationInfo.name : 'İstasyon'} istasyonundaki ${reservation.date} tarihli ${reservation.start_slot} - ${reservation.end_slot} rezervasyonunuz iptal edildi. İade edilen tutar: ${refundAmount.toFixed(2)} ₺`,
+        '❌ Reservation Cancelled',
+        `${stationInfo ? stationInfo.name : 'Station'} station's ${reservation.date} at ${reservation.start_slot} - ${reservation.end_slot} reservation cancelled. Refunded amount: ${refundAmount.toFixed(2)} ₺`,
         { reservationId: parseInt(req.params.id), stationName: stationInfo ? stationInfo.name : null }
     );
 
-    res.json({ message: `Rezervasyon iptal edildi. Cüzdanınıza iade edilen tutar: ${refundAmount.toFixed(2)} ₺` });
+    res.json({ message: `Reservation cancelled. Refunded amount to your balance: ${refundAmount.toFixed(2)} ₺` });
 });
 
 module.exports = router;

@@ -37,8 +37,8 @@ router.get('/', (req, res) => {
 //  POST /api/sessions — Şarj başlat
 // ══════════════════════════════════════
 router.post('/', [
-    body('reservationId').isInt().withMessage('Rezervasyon ID gerekli.'),
-    body('batteryStart').isFloat({ min: 0, max: 100 }).withMessage('Başlangıç batarya yüzdesi gerekli.'),
+    body('reservationId').isInt().withMessage('Reservation ID required.'),
+    body('batteryStart').isFloat({ min: 0, max: 100 }).withMessage('Battery start percentage required.'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -53,18 +53,18 @@ router.post('/', [
     ).get(reservationId, req.user.id);
 
     if (!reservation) {
-        return res.status(404).json({ error: 'Rezervasyon bulunamadı.' });
+        return res.status(404).json({ error: 'Reservation not found.' });
     }
 
     if (reservation.status !== 'active') {
-        return res.status(400).json({ error: 'Sadece aktif rezervasyonlar için şarj başlatılabilir.' });
+        return res.status(400).json({ error: 'Only active reservations can start charging.' });
     }
 
     // ── ZAMAN KONTROLÜ (Time Constraints) ──
     const now = new Date();
     const resStart = new Date(`${reservation.date}T${reservation.start_slot}:00`);
     let resEnd = new Date(`${reservation.date}T${reservation.end_slot}:00`);
-    
+
     if (resEnd <= resStart) {
         resEnd.setDate(resEnd.getDate() + 1); // Gece yarısı geçişi
     }
@@ -73,11 +73,11 @@ router.post('/', [
     const allowedStart = new Date(resStart.getTime() - 15 * 60 * 1000);
 
     if (now < allowedStart) {
-        return res.status(400).json({ error: `Şarj işlemine rezervasyon saatinizden en fazla 15 dakika önce başlayabilirsiniz. (Randevu: ${reservation.start_slot})` });
+        return res.status(400).json({ error: `You can start charging at most 15 minutes before your reservation. (Reservation: ${reservation.start_slot})` });
     }
 
     if (now > resEnd) {
-        return res.status(400).json({ error: 'Rezervasyon süreniz sona ermiş. Bu rezervasyon için şarj başlatılamaz.' });
+        return res.status(400).json({ error: 'Your reservation period has ended. Charging cannot be started for this reservation.' });
     }
 
     // Şarj ünitesinin fiyatını al
@@ -128,7 +128,7 @@ router.post('/', [
 
     session.maxAffordableEnergy = maxAffordableEnergy;
 
-    res.status(201).json({ message: 'Şarj oturumu başlatıldı.', session });
+    res.status(201).json({ message: 'Charging session started.', session });
 });
 
 // ══════════════════════════════════════
@@ -136,7 +136,7 @@ router.post('/', [
 //  energyConsumed backend tarafından hesaplanır (güvenlik)
 // ══════════════════════════════════════
 router.patch('/:id', [
-    body('batteryEnd').isFloat({ min: 0, max: 100 }).withMessage('Bitiş batarya yüzdesi gerekli.'),
+    body('batteryEnd').isFloat({ min: 0, max: 100 }).withMessage('Battery end percentage required.'),
 ], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -156,15 +156,15 @@ router.patch('/:id', [
     ).get(req.params.id, req.user.id);
 
     if (!session) {
-        return res.status(404).json({ error: 'Oturum bulunamadı.' });
+        return res.status(404).json({ error: 'Session not found.' });
     }
 
     if (session.status !== 'charging') {
-        return res.status(400).json({ error: 'Bu oturum zaten tamamlanmış.' });
+        return res.status(400).json({ error: 'This session is already completed.' });
     }
 
     if (batteryEnd < session.battery_start) {
-        return res.status(400).json({ error: 'Bitiş bataryası başlangıç bataryasından düşük olamaz.' });
+        return res.status(400).json({ error: 'End battery percentage cannot be lower than start battery percentage.' });
     }
 
     // ── ENERJİ TÜKETİMİNİ BACKEND HESAPLAR ──
@@ -205,7 +205,7 @@ router.patch('/:id', [
         let endMins = timeToMins(session.end_slot);
         if (endMins <= startMins) endMins += 24 * 60;
         const durationHours = (endMins - startMins) / 60;
-        
+
         depositPaid = durationHours * actualPower * session.price_per_kwh;
     }
 
@@ -258,25 +258,25 @@ router.patch('/:id', [
             }
         })();
     } catch (e) {
-        return res.status(500).json({ error: 'Şarj durdurulurken bir hata oluştu.' });
+        return res.status(500).json({ error: 'Failed to stop charging session.' });
     }
 
     const updated = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
 
     // Bildirim gönder
-    let notifMessage = `Şarj işleminiz tamamlandı. Toplam Maliyet: ${cost.toFixed(2)} ₺. `;
+    let notifMessage = `Your charging session is complete. Total Cost: ${cost.toFixed(2)} ₺. `;
     if (refundAmount > 0) {
-        notifMessage += `Rezervasyon sırasında ödenen ${depositPaid.toFixed(2)} ₺ depozitonun kullanılmayan ${refundAmount.toFixed(2)} ₺'lik kısmı cüzdanınıza iade edildi.`;
+        notifMessage += `The unused ${refundAmount.toFixed(2)} ₺ of the ${depositPaid.toFixed(2)} ₺ deposit paid during the reservation has been refunded to your wallet.`;
     } else if (refundAmount < 0) {
-        notifMessage += `Rezervasyon depozitosu (${depositPaid.toFixed(2)} ₺) düşüldükten sonra kalan ${Math.abs(refundAmount).toFixed(2)} ₺ cüzdanınızdan tahsil edildi.`;
+        notifMessage += `After deducting the reservation deposit (${depositPaid.toFixed(2)} ₺), the remaining ${Math.abs(refundAmount).toFixed(2)} ₺ has been charged from your wallet.`;
     } else {
-        notifMessage += `Ödenen depozito (${depositPaid.toFixed(2)} ₺) toplam maliyeti tam karşıladı.`;
+        notifMessage += `The deposit paid (${depositPaid.toFixed(2)} ₺) exactly covered the total cost.`;
     }
 
     createNotification(
         req.user.id,
         'wallet_topup', // Bakiye işlemi olduğu için veya yeni bir tip eklenebilir 'charging_completed'
-        '⚡ Şarj İşlemi Tamamlandı',
+        '⚡ Charging completed',
         notifMessage,
         { sessionId: req.params.id, energyConsumed, cost, refundAmount }
     );
@@ -285,14 +285,14 @@ router.patch('/:id', [
         createNotification(
             req.user.id,
             'wallet_empty',
-            '⚠️ Bakiye Tükendi',
-            'Cüzdan bakiyeniz tükendiği için şarj işleminiz otomatik olarak durdurulmuştur.',
+            '⚠️ Balance Depleted',
+            'Charging process has been automatically stopped because your wallet balance is depleted.',
             { sessionId: req.params.id }
         );
     }
 
     res.json({
-        message: 'Şarj tamamlandı.',
+        message: 'Charging completed.',
         session: updated,
         receipt: {
             receiptNo: 'RCP-' + Date.now(),

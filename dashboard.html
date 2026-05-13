@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +11,7 @@
     <style>
         /* ── Dashboard-specific styles ── */
         .welcome-banner {
-            background: linear-gradient(135deg, rgba(0,229,160,.08) 0%, rgba(0,168,232,.06) 100%);
+            background: linear-gradient(135deg, rgba(0, 229, 160, .08) 0%, rgba(0, 168, 232, .06) 100%);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 32px;
@@ -18,17 +19,32 @@
             position: relative;
             overflow: visible;
         }
+
         .welcome-banner::before {
             content: '';
             position: absolute;
-            top: -40px; right: -40px;
-            width: 200px; height: 200px;
-            background: radial-gradient(circle, rgba(0,229,160,.1) 0%, transparent 70%);
+            top: -40px;
+            right: -40px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 229, 160, .1) 0%, transparent 70%);
             pointer-events: none;
         }
-        .welcome-banner h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
-        .welcome-banner h1 span { color: var(--green); }
-        .welcome-banner p { color: var(--muted); font-size: 15px; }
+
+        .welcome-banner h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .welcome-banner h1 span {
+            color: var(--green);
+        }
+
+        .welcome-banner p {
+            color: var(--muted);
+            font-size: 15px;
+        }
 
         /* Quick actions */
         .quick-actions {
@@ -37,6 +53,7 @@
             gap: 16px;
             margin-bottom: 32px;
         }
+
         .action-card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -48,15 +65,29 @@
             text-decoration: none;
             color: var(--text);
         }
+
         .action-card:hover {
             transform: translateY(-4px);
             border-color: var(--green);
-            box-shadow: 0 8px 30px rgba(0,229,160,.12);
+            box-shadow: 0 8px 30px rgba(0, 229, 160, .12);
             opacity: 1;
         }
-        .action-card .action-icon { font-size: 32px; margin-bottom: 10px; }
-        .action-card .action-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-        .action-card .action-desc { font-size: 13px; color: var(--muted); }
+
+        .action-card .action-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .action-card .action-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .action-card .action-desc {
+            font-size: 13px;
+            color: var(--muted);
+        }
 
         /* Reservations section */
         .reservation-item {
@@ -69,42 +100,107 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .reservation-item.unavailable {
             border-color: rgba(255, 68, 102, .35);
             background: rgba(255, 68, 102, .03);
         }
-        .res-info { flex: 1; }
-        .res-station { font-size: 15px; font-weight: 600; }
-        .res-time { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .res-info {
+            flex: 1;
+        }
+
+        .res-station {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .res-time {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
         .res-warning {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 12px; color: var(--danger); margin-top: 6px;
-            background: rgba(255, 68, 102, .08); padding: 6px 12px;
-            border-radius: 8px; border: 1px solid rgba(255, 68, 102, .2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 6px;
+            background: rgba(255, 68, 102, .08);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 68, 102, .2);
         }
 
         /* Alternatives Modal */
-        .alt-modal { width: min(600px, 94vw); max-height: 80vh; overflow-y: auto; }
+        .alt-modal {
+            width: min(600px, 94vw);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         .alt-section-title {
-            font-size: 14px; font-weight: 700; color: var(--green);
-            margin: 20px 0 12px; text-transform: uppercase; letter-spacing: .5px;
-            display: flex; align-items: center; gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green);
+            margin: 20px 0 12px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         .alt-card {
-            background: var(--card2); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; transition: border-color .2s, box-shadow .2s;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: border-color .2s, box-shadow .2s;
         }
+
         .alt-card:hover {
-            border-color: rgba(0,229,160,.4);
-            box-shadow: 0 4px 16px rgba(0,229,160,.08);
+            border-color: rgba(0, 229, 160, .4);
+            box-shadow: 0 4px 16px rgba(0, 229, 160, .08);
         }
-        .alt-card-info { flex: 1; }
-        .alt-card-name { font-size: 14px; font-weight: 600; }
-        .alt-card-details { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .alt-card-details span { display: flex; align-items: center; gap: 4px; }
-        .alt-empty { text-align: center; color: var(--muted); padding: 20px; font-size: 14px; }
+
+        .alt-card-info {
+            flex: 1;
+        }
+
+        .alt-card-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .alt-card-details {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .alt-card-details span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .alt-empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 20px;
+            font-size: 14px;
+        }
 
         /* ── Notification System ── */
         .notif-wrapper {
@@ -138,8 +234,15 @@
         }
 
         @keyframes bellPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 160, .3); }
-            50% { box-shadow: 0 0 0 8px rgba(0, 229, 160, 0); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 229, 160, .3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(0, 229, 160, 0);
+            }
         }
 
         .notif-badge {
@@ -160,7 +263,9 @@
             box-shadow: 0 2px 8px rgba(255, 68, 102, .4);
         }
 
-        .notif-badge.hidden { display: none; }
+        .notif-badge.hidden {
+            display: none;
+        }
 
         /* Dropdown Panel */
         .notif-panel {
@@ -333,16 +438,18 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <header class="navbar" id="navbar"></header>
 
     <div class="container">
         <!-- Welcome Banner -->
-        <div class="welcome-banner" style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        <div class="welcome-banner"
+            style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
             <div>
-                <h1>Hoş geldin, <span id="userName">Kullanıcı</span> 👋</h1>
-                <p>Elektrikli aracını şarj etmeye hazır mısın?</p>
+                <h1>Welcome, <span id="userName">User</span> 👋</h1>
+                <p>Ready to charge your electric vehicle?</p>
             </div>
             <div class="notif-wrapper" id="notifWrapper">
                 <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
@@ -351,17 +458,21 @@
                 </div>
                 <div class="notif-panel" id="notifPanel">
                     <div class="notif-panel-header">
-                        <h3>🔔 Bildirimler</h3>
-                        <button class="notif-mark-all" id="markAllReadBtn" onclick="markAllRead()">Tümünü Okundu Yap</button>
+                        <h3>🔔 Notifications</h3>
+                        <button class="notif-mark-all" id="markAllReadBtn" onclick="markAllRead()">Mark All
+                            Read</button>
                     </div>
                     <div class="notif-list" id="notifList">
                         <div class="notif-empty">
                             <div class="notif-empty-icon">🔔</div>
-                            <p>Henüz bildiriminiz yok.</p>
+                            <p>You don't have any notifications yet.</p>
                         </div>
                     </div>
-                    <div style="padding: 12px; text-align: center; border-top: 1px solid var(--border); background: var(--card2); border-radius: 0 0 var(--radius) var(--radius);">
-                        <a href="notifications.html" style="color: var(--accent); font-weight: 600; text-decoration: none; font-size: 14px;">Tüm Bildirimleri Gör</a>
+                    <div
+                        style="padding: 12px; text-align: center; border-top: 1px solid var(--border); background: var(--card2); border-radius: 0 0 var(--radius) var(--radius);">
+                        <a href="notifications.html"
+                            style="color: var(--accent); font-weight: 600; text-decoration: none; font-size: 14px;">View
+                            All Notifications</a>
                     </div>
                 </div>
             </div>
@@ -371,35 +482,36 @@
         <div class="quick-actions">
             <a href="map.html" class="action-card">
                 <div class="action-icon">🗺️</div>
-                <div class="action-title">İstasyon Bul</div>
-                <div class="action-desc">Haritada yakın istasyonları keşfet</div>
+                <div class="action-title">Find Station</div>
+                <div class="action-desc">Discover nearby stations on the map</div>
             </a>
             <a href="map.html?action=reserve" class="action-card">
                 <div class="action-icon">📅</div>
-                <div class="action-title">Rezervasyon Yap</div>
-                <div class="action-desc">Haritadan istasyon seçip ayırt</div>
+                <div class="action-title">Make Reservation</div>
+                <div class="action-desc">Select and reserve station from the map</div>
             </a>
             <a href="charging.html" class="action-card">
                 <div class="action-icon">⚡</div>
-                <div class="action-title">Şarj Başlat</div>
-                <div class="action-desc">Aktif rezervasyondan şarj et</div>
+                <div class="action-title">Start Charging</div>
+                <div class="action-desc">Charge from active reservation</div>
             </a>
         </div>
 
         <!-- Favoriler -->
         <div class="card" style="margin-top: 24px;">
             <div class="card-header">
-                <h2>❤️ Favori İstasyonlarım</h2>
+                <h2>❤️ Favorite Stations</h2>
             </div>
             <div id="favoritesList" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
-                <p style="color:var(--muted); font-size:14px; padding:12px;">Henüz favori istasyonunuz yok.</p>
+                <p style="color:var(--muted); font-size:14px; padding:12px;">You don't have any favorite stations yet.
+                </p>
             </div>
         </div>
 
         <!-- Aktif Rezervasyonlar -->
         <div class="card" style="margin-top: 24px;">
             <div class="card-header">
-                <h2>📅 Aktif Rezervasyonlar</h2>
+                <h2>📅 Active Reservations</h2>
             </div>
             <div id="reservationList">
                 <!-- JS ile doldurulacak -->
@@ -410,11 +522,12 @@
     <!-- Onay Modalı (İptal/Silme işlemleri için) -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal" style="width: min(400px, 90vw); text-align: center;">
-            <h3 style="margin-bottom: 10px;">⚠️ Emin misiniz?</h3>
-            <p id="confirmModalText" style="color: var(--muted); margin-bottom: 24px;">Bu işlemi gerçekleştirmek istediğinize emin misiniz?</p>
+            <h3 style="margin-bottom: 10px;">⚠️ Are you sure?</h3>
+            <p id="confirmModalText" style="color: var(--muted); margin-bottom: 24px;">Are you sure you want to perform
+                this action?</p>
             <div class="modal-actions" style="justify-content: center;">
-                <button class="btn btn-secondary" onclick="closeConfirmModal()">Vazgeç</button>
-                <button class="btn btn-danger" id="confirmModalBtn">Evet, Onayla</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmModalBtn">Yes, Confirm</button>
             </div>
         </div>
     </div>
@@ -422,21 +535,25 @@
     <!-- Alternatif Önerileri Modalı -->
     <div class="modal-overlay" id="altModal">
         <div class="modal alt-modal">
-            <h3>🔄 Alternatif Şarj Ünitesi Önerileri</h3>
+            <h3>🔄 Alternative Charging Unit Suggestions</h3>
             <p style="color: var(--muted); font-size: 14px; margin-bottom: 8px;">
-                Rezervasyonunuzdaki şarj ünitesi şu anda müsait değil.<br>
-                Aşağıdaki alternatiflerden birini seçerek rezervasyonunuzu taşıyabilirsiniz.
+                The charging unit in your reservation is currently unavailable.<br>
+                You can move your reservation to one of the alternatives below.
             </p>
-            <div style="background:rgba(0,229,160,.06); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; font-size:13px;">
-                <strong>Araç:</strong> <span id="altVehicle">-</span> &nbsp;|&nbsp;
-                <strong>Zaman:</strong> <span id="altTimeSlot">-</span>
+            <div
+                style="background:rgba(0,229,160,.06); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:8px; font-size:13px;">
+                <strong>Vehicle:</strong> <span id="altVehicle">-</span> &nbsp;|&nbsp;
+                <strong>Time:</strong> <span id="altTimeSlot">-</span>
             </div>
             <div id="altContent">
-                <div class="loading-state"><div class="spinner" style="margin:20px auto;"></div></div>
+                <div class="loading-state">
+                    <div class="spinner" style="margin:20px auto;"></div>
+                </div>
             </div>
             <div class="modal-actions" style="margin-top:16px;">
-                <button class="btn btn-secondary" onclick="closeAltModal()">Kapat</button>
-                <button class="btn btn-danger btn-sm" id="altCancelBtn" style="display:none;">❌ Rezervasyonu İptal Et</button>
+                <button class="btn btn-secondary" onclick="closeAltModal()">Close</button>
+                <button class="btn btn-danger btn-sm" id="altCancelBtn" style="display:none;">❌ Cancel
+                    Reservation</button>
             </div>
         </div>
     </div>
@@ -451,7 +568,7 @@
             if (!user) return;
 
             App.renderNavbar('dashboard');
-            document.getElementById('userName').textContent = user.name || 'Kullanıcı';
+            document.getElementById('userName').textContent = user.name || 'User';
 
             renderReservations();
             renderFavorites();
@@ -467,7 +584,7 @@
             try {
                 const favorites = await API.getFavorites();
                 if (favorites.length === 0) {
-                    list.innerHTML = '<p style="color:var(--muted); font-size:14px; padding:12px;">Henüz favori istasyonunuz yok. İstasyon detay sayfasından ekleyebilirsiniz.</p>';
+                    list.innerHTML = '<p style="color:var(--muted); font-size:14px; padding:12px;">You don\'t have any favorite stations yet. You can add them from the station details page.</p>';
                     return;
                 }
 
@@ -475,17 +592,17 @@
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 250px; flex-shrink: 0;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                             <h3 style="font-size:16px;">📍 ${f.name}</h3>
-                            <button onclick="toggleFavoriteFromDashboard(${f.id})" style="background:none; border:none; color:red; cursor:pointer; font-size:16px;" title="Favorilerden Çıkar">✖</button>
+                            <button onclick="toggleFavoriteFromDashboard(${f.id})" style="background:none; border:none; color:red; cursor:pointer; font-size:16px;" title="Remove from Favorites">✖</button>
                         </div>
                         <p style="font-size:12px; color:var(--muted); margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.address}</p>
                         <div style="display:flex; gap:8px;">
-                            <a href="station-detail.html?id=${f.id}" class="btn btn-secondary btn-sm" style="flex:1;">İncele</a>
-                            <a href="reservation.html?station=${f.id}" class="btn btn-primary btn-sm" style="flex:1;">Randevu</a>
+                            <a href="station-detail.html?id=${f.id}" class="btn btn-secondary btn-sm" style="flex:1;">View Details</a>
+                            <a href="reservation.html?station=${f.id}" class="btn btn-primary btn-sm" style="flex:1;">Make Reservation</a>
                         </div>
                     </div>
                 `).join('');
             } catch (e) {
-                list.innerHTML = '<p style="color:var(--danger); font-size:14px; padding:12px;">Favoriler yüklenirken hata oluştu.</p>';
+                list.innerHTML = '<p style="color:var(--danger); font-size:14px; padding:12px;">Error loading favorites.</p>';
             }
         }
 
@@ -493,9 +610,9 @@
             try {
                 const res = await API.toggleFavorite(stationId);
                 App.showToast(res.message);
-                renderFavorites(); // Listeyi yenile
-            } catch(e) {
-                App.showToast('Hata: ' + e.message, 'error');
+                renderFavorites(); // Refresh the list
+            } catch (e) {
+                App.showToast('Error: ' + e.message, 'error');
             }
         }
 
@@ -535,8 +652,8 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-icon">📅</div>
-                            <p>Aktif rezervasyonunuz bulunmuyor.</p>
-                            <a href="map.html" class="btn btn-primary btn-sm">İstasyon Bul</a>
+                            <p>You don't have any active reservations.</p>
+                            <a href="map.html" class="btn btn-primary btn-sm">Find Station</a>
                         </div>
                     `;
                     return;
@@ -552,34 +669,34 @@
 
                     const isUnavailable = altData && altData.is_unavailable;
                     const chargerStatus = altData ? altData.current_charger_status : 'available';
-                    const statusLabel = chargerStatus === 'occupied' ? 'Kullanımda' :
-                                        chargerStatus === 'offline' ? 'Çevrimdışı' : '';
+                    const statusLabel = chargerStatus === 'occupied' ? 'Occupied' :
+                        chargerStatus === 'offline' ? 'Offline' : '';
 
                     html += `
                     <div class="reservation-item ${isUnavailable ? 'unavailable' : ''}">
                         <div class="res-info">
-                            <div class="res-station">📍 ${r.station_name || 'İstasyon'}</div>
+                            <div class="res-station">📍 ${r.station_name || 'Station'}</div>
                             <div class="res-time">${r.date} • ${r.start_slot} - ${r.end_slot}</div>
                             ${isUnavailable ? `
                             <div class="res-warning">
-                                ⚠️ Şarj ünitesi şu anda <strong>${statusLabel}</strong>.
-                                Alternatif bulmak için tıklayın.
+                                ⚠️ The charging unit is currently <strong>${statusLabel}</strong>.
+                                Click to find an alternative.
                             </div>` : ''}
                         </div>
                         <div class="res-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
                             ${isUnavailable ? `
-                                <button class="btn btn-secondary btn-sm" style="border-color:rgba(255,215,0,.4); color:var(--warning);" onclick="showAlternatives(${r.id})">🔄 Alternatif Bul</button>
+                                <button class="btn btn-secondary btn-sm" style="border-color:rgba(255,215,0,.4); color:var(--warning);" onclick="showAlternatives(${r.id})">🔄 Find Alternative</button>
                             ` : `
-                                <a href="charging.html?rid=${r.id}" class="btn btn-primary btn-sm">⚡ Şarj Başlat</a>
+                                <a href="charging.html?rid=${r.id}" class="btn btn-primary btn-sm">⚡ Start Charging</a>
                             `}
-                            <button class="btn btn-danger btn-sm" onclick="cancelReservation(${r.id}, '${r.date}', '${r.start_slot}')">❌ İptal</button>
+                            <button class="btn btn-danger btn-sm" onclick="cancelReservation(${r.id}, '${r.date}', '${r.start_slot}')">❌ Cancel</button>
                         </div>
                     </div>`;
                 }
 
                 container.innerHTML = html;
             } catch (err) {
-                App.showToast('Rezervasyonlar yüklenemedi.', 'error');
+                App.showToast('Reservations could not be loaded.', 'error');
             }
         }
 
@@ -588,21 +705,21 @@
             const resStart = new Date(`${date}T${startSlot}:00`);
             const diffMins = (resStart - now) / (1000 * 60);
 
-            let message = 'Bu rezervasyonu iptal etmek istediğinize emin misiniz? (Şarja 1 saatten fazla olduğu için paranızın tamamı iade edilecektir.)';
-            
+            let message = 'Are you sure you want to cancel this reservation? (Your full refund will be returned as it is more than 1 hour to charging.)';
+
             if (diffMins < 0) {
-                message = "Bu rezervasyonun başlangıç saati geçmiş. İade yapılmayacaktır. Yine de iptal edilsin mi?";
+                message = " The start time of this reservation has passed. No refund will be made. Do you want to cancel it anyway?";
             } else if (diffMins < 60) {
-                message = "⚠️ DİKKAT: Şarja 1 saatten az kaldığı için iptal ederseniz paranızın sadece %50'si iade edilecektir. Onaylıyor musunuz?";
+                message = "⚠️ CAUTION: If you cancel because there is less than 1 hour left for charging, only 50% of your money will be refunded. Do you confirm?";
             }
 
             openConfirmModal(message, async () => {
                 try {
                     const res = await API.cancelReservation(resId);
                     renderReservations();
-                    App.showToast('✅ ' + (res.message || 'Rezervasyon iptal edildi.'));
+                    App.showToast('✅ ' + (res.message || 'Reservation canceled.'));
                 } catch (err) {
-                    App.showToast('Hata: ' + err.message, 'error');
+                    App.showToast('Error: ' + err.message, 'error');
                 }
             });
         }
@@ -615,7 +732,7 @@
         async function showAlternatives(reservationId) {
             currentAltResId = reservationId;
             document.getElementById('altModal').classList.add('show');
-            document.getElementById('altContent').innerHTML = '<div class="loading-state"><div class="spinner" style="margin:20px auto;"></div><p style="color:var(--muted);font-size:14px;">Alternatifler aranıyor...</p></div>';
+            document.getElementById('altContent').innerHTML = '<div class="loading-state"><div class="spinner" style="margin:20px auto;"></div><p style="color:var(--muted);font-size:14px;">Searching alternatives...</p></div>';
             document.getElementById('altCancelBtn').style.display = 'none';
 
             try {
@@ -625,20 +742,20 @@
 
                 let html = '';
 
-                // Aynı istasyondaki alternatifler
-                html += '<div class="alt-section-title">🏢 Aynı İstasyondaki Alternatifler</div>';
+                // Same station alternatives
+                html += '<div class="alt-section-title">🏢 Same Station Alternatives</div>';
                 if (data.same_station_alternatives.length === 0) {
-                    html += '<div class="alt-empty">Bu istasyonda uyumlu müsait ünite bulunamadı.</div>';
+                    html += '<div class="alt-empty">No compatible available unit found at this station.</div>';
                 } else {
                     data.same_station_alternatives.forEach(alt => {
                         html += renderAltCard(alt, reservationId);
                     });
                 }
 
-                // Yakın istasyonlardaki alternatifler
-                html += '<div class="alt-section-title">📍 Yakın İstasyonlardaki Alternatifler</div>';
+                // Nearby station alternatives
+                html += '<div class="alt-section-title">📍 Nearby Station Alternatives</div>';
                 if (data.nearby_station_alternatives.length === 0) {
-                    html += '<div class="alt-empty">15 km içinde uyumlu müsait istasyon bulunamadı.</div>';
+                    html += '<div class="alt-empty">No compatible available unit found within 15 km.</div>';
                 } else {
                     data.nearby_station_alternatives.forEach(alt => {
                         html += renderAltCard(alt, reservationId);
@@ -647,8 +764,8 @@
 
                 if (data.total_alternatives === 0) {
                     html += `<div style="text-align:center; padding:16px; margin-top:12px; background:rgba(255,68,102,.06); border-radius:10px; border:1px solid rgba(255,68,102,.2);">
-                        <p style="color:var(--danger); font-size:14px; font-weight:600;">😔 Hiçbir alternatif bulunamadı.</p>
-                        <p style="color:var(--muted); font-size:13px; margin-top:4px;">Rezervasyonunuzu iptal edip iade alabilirsiniz.</p>
+                        <p style="color:var(--danger); font-size:14px; font-weight:600;">😔 No alternatives found.</p>
+                        <p style="color:var(--muted); font-size:13px; margin-top:4px;">You can cancel your reservation and get a refund.</p>
                     </div>`;
                     document.getElementById('altCancelBtn').style.display = 'inline-flex';
                     document.getElementById('altCancelBtn').onclick = () => {
@@ -662,7 +779,7 @@
                 document.getElementById('altContent').innerHTML = html;
 
             } catch (err) {
-                document.getElementById('altContent').innerHTML = `<div class="alt-empty">❌ Hata: ${err.message}</div>`;
+                document.getElementById('altContent').innerHTML = `<div class="alt-empty">❌ Error: ${err.message}</div>`;
             }
         }
 
@@ -681,7 +798,7 @@
                     </div>
                 </div>
                 <button class="btn btn-primary btn-sm" onclick="switchToAlternative(${reservationId}, ${alt.charger_id}, ${alt.station_id})">
-                    🔄 Taşı
+                    🔄 Switch
                 </button>
             </div>`;
         }
@@ -690,7 +807,7 @@
             try {
                 const res = await API.switchReservation(reservationId, chargerId, stationId);
                 closeAltModal();
-                App.showToast('✅ ' + (res.message || 'Rezervasyon başarıyla aktarıldı!'));
+                App.showToast('✅ ' + (res.message || 'Reservation switched successfully!'));
                 renderReservations();
             } catch (err) {
                 App.showToast('❌ ' + err.message, 'error');
@@ -703,10 +820,10 @@
         }
 
         // ── Modal dışına tıklayınca kapat ──
-        document.getElementById('confirmModal').addEventListener('click', function(e) {
+        document.getElementById('confirmModal').addEventListener('click', function (e) {
             if (e.target === this) closeConfirmModal();
         });
-        document.getElementById('altModal').addEventListener('click', function(e) {
+        document.getElementById('altModal').addEventListener('click', function (e) {
             if (e.target === this) closeAltModal();
         });
 
@@ -716,11 +833,11 @@
 
         function getNotifIcon(type) {
             const map = {
-                'reservation_created':   { icon: '📅', cls: 'created' },
+                'reservation_created': { icon: '📅', cls: 'created' },
                 'reservation_cancelled': { icon: '❌', cls: 'cancelled' },
-                'station_offline':       { icon: '⚠️', cls: 'offline' },
-                'admin_cancelled':       { icon: '🛡️', cls: 'admin' },
-                'wallet_topup':          { icon: '💰', cls: 'topup' },
+                'station_offline': { icon: '⚠️', cls: 'offline' },
+                'admin_cancelled': { icon: '🛡️', cls: 'admin' },
+                'wallet_topup': { icon: '💰', cls: 'topup' },
             };
             return map[type] || { icon: '🔔', cls: 'created' };
         }
@@ -730,10 +847,10 @@
             const date = new Date(dateStr + (dateStr.endsWith('Z') ? '' : 'Z'));
             const diffSec = Math.floor((now - date) / 1000);
 
-            if (diffSec < 60) return 'Az önce';
-            if (diffSec < 3600) return `${Math.floor(diffSec / 60)} dk önce`;
-            if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} saat önce`;
-            if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} gün önce`;
+            if (diffSec < 60) return 'Just now';
+            if (diffSec < 3600) return `${Math.floor(diffSec / 60)} mins ago`;
+            if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hours ago`;
+            if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} days ago`;
             return date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
         }
 
@@ -759,7 +876,7 @@
                     list.innerHTML = `
                         <div class="notif-empty">
                             <div class="notif-empty-icon">🔔</div>
-                            <p>Henüz bildiriminiz yok.</p>
+                            <p>You don't have any notifications yet.</p>
                         </div>
                     `;
                     return;
@@ -779,7 +896,7 @@
                     `;
                 }).join('');
             } catch (err) {
-                console.error('Bildirimler yüklenemedi:', err);
+                console.error('Notifications could not be loaded:', err);
             }
         }
 
@@ -796,7 +913,7 @@
                     badge.classList.add('hidden');
                     bell.classList.remove('has-unread');
                 }
-            } catch(e) { /* silent */ }
+            } catch (e) { /* silent */ }
         }
 
         function toggleNotifPanel() {
@@ -821,7 +938,7 @@
                     await API.markNotificationRead(id);
                     el.classList.remove('unread');
                     refreshNotifBadge();
-                } catch(e) { /* silent */ }
+                } catch (e) { /* silent */ }
             }
         }
 
@@ -832,11 +949,12 @@
                 const badge = document.getElementById('notifBadge');
                 badge.classList.add('hidden');
                 document.getElementById('notifBell').classList.remove('has-unread');
-                App.showToast('✅ Tüm bildirimler okundu olarak işaretlendi.');
-            } catch(e) {
-                App.showToast('Hata oluştu.', 'error');
+                App.showToast('✅ All notifications marked as read.');
+            } catch (e) {
+                App.showToast('Error occurred.', 'error');
             }
         }
     </script>
 </body>
+
 </html>

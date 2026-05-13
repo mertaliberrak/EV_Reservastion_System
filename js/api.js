@@ -46,13 +46,13 @@ const API = {
                     }
                     return;
                 }
-                throw new Error(data.error || 'Bir hata oluştu.');
+                throw new Error(data.error || 'An error occurred.');
             }
 
             return data;
         } catch (err) {
             if (err.message === 'Failed to fetch') {
-                throw new Error('Sunucuya bağlanılamadı. Backend çalışıyor mu?');
+                throw new Error('Failed to connect to the server. Is the backend running?');
             }
             throw err;
         }

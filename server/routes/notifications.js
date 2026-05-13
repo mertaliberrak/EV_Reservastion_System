@@ -28,8 +28,8 @@ router.get('/', (req, res) => {
 
         res.json({ notifications });
     } catch (err) {
-        console.error('Bildirimler getirme hatası:', err);
-        res.status(500).json({ error: 'Bildirimler alınırken bir hata oluştu.' });
+        console.error('Error fetching notifications:', err);
+        res.status(500).json({ error: 'Error fetching notifications.' });
     }
 });
 
@@ -44,7 +44,7 @@ router.get('/unread-count', (req, res) => {
 
         res.json({ count: result.count });
     } catch (err) {
-        res.status(500).json({ error: 'Bildirim sayısı alınamadı.' });
+        res.status(500).json({ error: 'Error fetching notification count.' });
     }
 });
 
@@ -58,12 +58,12 @@ router.patch('/:id/read', (req, res) => {
         ).run(req.params.id, req.user.id);
 
         if (info.changes === 0) {
-            return res.status(404).json({ error: 'Bildirim bulunamadı.' });
+            return res.status(404).json({ error: 'Notification not found.' });
         }
 
-        res.json({ message: 'Bildirim okundu olarak işaretlendi.' });
+        res.json({ message: 'Notification marked as read.' });
     } catch (err) {
-        res.status(500).json({ error: 'İşlem sırasında bir hata oluştu.' });
+        res.status(500).json({ error: 'An error occurred while processing your request.' });
     }
 });
 
@@ -76,9 +76,9 @@ router.patch('/read-all', (req, res) => {
             'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0'
         ).run(req.user.id);
 
-        res.json({ message: 'Tüm bildirimler okundu olarak işaretlendi.' });
+        res.json({ message: 'All notifications marked as read.' });
     } catch (err) {
-        res.status(500).json({ error: 'İşlem sırasında bir hata oluştu.' });
+        res.status(500).json({ error: 'An error occurred while processing your request.' });
     }
 });
 

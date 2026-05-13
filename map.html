@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Harita</title>
+    <title>EVCharge — Map</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
@@ -174,24 +174,24 @@
     <div class="map-layout">
         <!-- Sidebar: Filtreler + İstasyon listesi -->
         <aside class="map-sidebar" id="sidebar">
-            <h2>🗺️ İstasyon Filtrele</h2>
+            <h2>Station Filter</h2>
 
             <!-- Durum filtresi -->
             <div class="filter-section">
-                <label for="filterStatus">Durum</label>
+                <label for="filterStatus">Status</label>
                 <select class="form-control" id="filterStatus">
-                    <option value="all">Tümü</option>
-                    <option value="available">Müsait</option>
-                    <option value="occupied">Dolu</option>
-                    <option value="offline">Çevrimdışı</option>
+                    <option value="all">All</option>
+                    <option value="available">Available</option>
+                    <option value="occupied">Occupied</option>
+                    <option value="offline">Offline</option>
                 </select>
             </div>
 
             <!-- Konnektör tipi filtresi -->
             <div class="filter-section">
-                <label for="filterConnector">Konnektör Tipi</label>
+                <label for="filterConnector">Connector Type</label>
                 <select class="form-control" id="filterConnector">
-                    <option value="">Tümü</option>
+                    <option value="">All</option>
                     <option value="Type 2">Type 2</option>
                     <option value="CCS">CCS</option>
                     <option value="CHAdeMO">CHAdeMO</option>
@@ -200,9 +200,9 @@
 
             <!-- Güç filtresi -->
             <div class="filter-section">
-                <label for="filterPower">Minimum Güç (kW)</label>
+                <label for="filterPower">Minimum Power (kW)</label>
                 <select class="form-control" id="filterPower">
-                    <option value="">Tümü</option>
+                    <option value="">All</option>
                     <option value="22">22 kW+</option>
                     <option value="50">50 kW+</option>
                     <option value="150">150 kW+</option>
@@ -211,9 +211,9 @@
 
             <!-- Fiyat filtresi -->
             <div class="filter-section">
-                <label for="filterPrice">Maks. Fiyat (₺/kWh)</label>
+                <label for="filterPrice">Max. Price (₺/kWh)</label>
                 <select class="form-control" id="filterPrice">
-                    <option value="">Tümü</option>
+                    <option value="">All</option>
                     <option value="3.5">≤ 3.50 ₺</option>
                     <option value="4.0">≤ 4.00 ₺</option>
                     <option value="5.0">≤ 5.00 ₺</option>
@@ -221,34 +221,33 @@
                 </select>
             </div>
 
-            <button class="btn btn-primary" style="width:100%;" onclick="applyFilters()">Filtrele</button>
-            <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
-                onclick="clearFilters()">Temizle</button>
+            <button class="btn btn-primary" style="width:100%;" onclick="applyFilters()">Filter</button>
+            <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="clearFilters()">Clear</button>
 
             <!-- Renk Açıklaması -->
             <div class="legend">
-                <h3>Renk Kodları</h3>
+                <h3>Color Codes</h3>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#00e5a0;"></div>
-                    Müsait — şarj ünitesi boş
+                    Available — charger free
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#ffd700;"></div>
-                    Dolu — tüm üniteler kullanımda
+                    Occupied — all units in use
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#ff4466;"></div>
-                    Çevrimdışı — bakımda/arızalı
+                    Offline — maintenance/faulty
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#4285F4;"></div>
-                    Sizin konumunuz
+                    Your Location
                 </div>
             </div>
 
             <!-- İstasyon Listesi -->
             <div class="station-list" id="stationList">
-                <h3>İstasyonlar</h3>
+                <h3>Stations</h3>
                 <!-- JS ile doldurulacak -->
             </div>
         </aside>
@@ -282,7 +281,7 @@
                 MapModule.displayStations(allStations);
                 renderStationList(allStations);
             } catch (err) {
-                App.showToast('İstasyonlar yüklenemedi: ' + err.message, 'error');
+                App.showToast('Stations could not be loaded: ' + err.message, 'error');
             }
         }
 
@@ -295,7 +294,7 @@
                 offline: '#ff4466',
             };
 
-            let html = '<h3>İstasyonlar (' + stations.length + ')</h3>';
+            let html = '<h3>Stations (' + stations.length + ')</h3>';
 
             stations.forEach(station => {
                 const status = MapModule.getStationOverallStatus(station);
@@ -309,7 +308,7 @@
                             ${station.name}
                         </div>
                         <div class="sli-info">
-                            ${station.address} • ⚡ ${available}/${chargers.length} müsait
+                            ${station.address} • ⚡ ${available}/${chargers.length} available
                         </div>
                     </div>
                 `;
@@ -386,7 +385,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('action') === 'reserve') {
                 setTimeout(() => {
-                    App.showToast('ℹ️ Lütfen haritadan rezervasyon yapmak istediğiniz istasyonu seçin.');
+                    App.showToast('ℹ️ Please select a station on the map to make a reservation.');
                 }, 500);
             }
 
@@ -399,7 +398,7 @@
                 script.defer = true;
                 document.head.appendChild(script);
             } catch (err) {
-                App.showToast('Harita yüklenemedi: ' + err.message, 'error');
+                App.showToast('Map could not be loaded: ' + err.message, 'error');
             }
         })();
     </script>

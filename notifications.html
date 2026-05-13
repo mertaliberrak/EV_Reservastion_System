@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Bildirimler</title>
+    <title>EVCharge — Notifications</title>
     <!-- Modern Yazı Tipi -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
@@ -53,6 +54,7 @@
             transition: color 0.2s;
             font-family: inherit;
         }
+
         .mark-all-btn:hover {
             color: var(--accent-hover);
             text-decoration: underline;
@@ -88,6 +90,7 @@
         .notif-item.unread {
             background: rgba(0, 168, 232, 0.05);
         }
+
         .notif-item.unread:hover {
             background: rgba(0, 168, 232, 0.1);
         }
@@ -115,11 +118,25 @@
         }
 
         /* İkon arka planları (dashboard.html ile aynı) */
-        .notif-icon.created { background: rgba(0, 229, 160, .12); }
-        .notif-icon.cancelled { background: rgba(255, 68, 102, .12); }
-        .notif-icon.offline { background: rgba(255, 176, 32, .12); }
-        .notif-icon.admin { background: rgba(168, 85, 247, .12); }
-        .notif-icon.topup { background: rgba(0, 168, 232, .12); }
+        .notif-icon.created {
+            background: rgba(0, 229, 160, .12);
+        }
+
+        .notif-icon.cancelled {
+            background: rgba(255, 68, 102, .12);
+        }
+
+        .notif-icon.offline {
+            background: rgba(255, 176, 32, .12);
+        }
+
+        .notif-icon.admin {
+            background: rgba(168, 85, 247, .12);
+        }
+
+        .notif-icon.topup {
+            background: rgba(0, 168, 232, .12);
+        }
 
         .notif-info {
             display: flex;
@@ -230,22 +247,27 @@
                 height: auto;
                 max-height: none;
             }
+
             .notif-list-pane {
                 max-width: none;
-                height: 400px; /* Mobilde liste yüksekliği */
+                height: 400px;
+                /* Mobilde liste yüksekliği */
             }
+
             .notif-detail-pane {
                 min-height: 400px;
             }
         }
     </style>
 </head>
+
 <body>
     <header class="navbar" id="navbar"></header>
 
     <div class="container">
         <div style="margin-bottom: 20px;">
-            <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:8px; padding: 6px 12px;">
+            <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary btn-sm"
+                style="display:inline-flex; align-items:center; gap:8px; padding: 6px 12px;">
                 <span style="font-size:16px;">&larr;</span> Geri Dön
             </button>
         </div>
@@ -253,11 +275,11 @@
             <!-- Sol Panel: Bildirim Listesi -->
             <div class="notif-list-pane">
                 <div class="notif-list-header">
-                    <h2>Bildirimler</h2>
-                    <button class="mark-all-btn" onclick="Notifications.markAllRead()">Tümünü Okundu Yap</button>
+                    <h2>Notifications</h2>
+                    <button class="mark-all-btn" onclick="Notifications.markAllRead()">Mark All As Read</button>
                 </div>
                 <div class="notif-items" id="notifList">
-                    <div style="padding:20px; text-align:center; color:var(--muted);">Yükleniyor...</div>
+                    <div style="padding:20px; text-align:center; color:var(--muted);">Loading...</div>
                 </div>
             </div>
 
@@ -265,21 +287,23 @@
             <div class="notif-detail-pane">
                 <div class="detail-empty-state" id="detailEmptyState">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                        </path>
                     </svg>
-                    <p>Okumak için soldaki listeden bir bildirim seçin.</p>
+                    <p>Select a notification from the list on the left to read.</p>
                 </div>
 
                 <div class="detail-content" id="detailContent">
                     <div class="detail-header">
                         <div class="detail-icon" id="detailIcon">🔔</div>
                         <div class="detail-title-group">
-                            <h1 id="detailTitle">Bildirim Başlığı</h1>
-                            <div class="detail-date" id="detailDate">Tarih</div>
+                            <h1 id="detailTitle">Notification Title</h1>
+                            <div class="detail-date" id="detailDate">Date</div>
                         </div>
                     </div>
                     <div class="detail-body" id="detailMessage">
-                        <!-- Bildirim içeriği buraya gelecek -->
+                        Notification content will appear here
                     </div>
                 </div>
             </div>
@@ -292,4 +316,5 @@
     <script src="js/app.js"></script>
     <script src="js/notifications.js"></script>
 </body>
+
 </html>

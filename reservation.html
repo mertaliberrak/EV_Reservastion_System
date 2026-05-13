@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Rezervasyon</title>
+    <title>EVCharge — Reservation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
@@ -81,6 +81,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
+
         .confirm-overlay.show {
             opacity: 1;
             pointer-events: auto;
@@ -97,6 +98,7 @@
             transform: scale(0.9);
             transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
         .confirm-overlay.show .confirm-card {
             transform: scale(1);
         }
@@ -113,10 +115,19 @@
             margin: 0 auto 16px;
             animation: confirmPop 0.5s ease 0.2s both;
         }
+
         @keyframes confirmPop {
-            0% { transform: scale(0); }
-            60% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(0);
+            }
+
+            60% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .confirm-title {
@@ -124,6 +135,7 @@
             font-weight: 700;
             margin-bottom: 6px;
         }
+
         .confirm-subtitle {
             font-size: 14px;
             color: var(--muted);
@@ -138,19 +150,23 @@
             text-align: left;
             margin-bottom: 20px;
         }
+
         .confirm-detail-row {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
             font-size: 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
+
         .confirm-detail-row:last-child {
             border-bottom: none;
         }
+
         .confirm-detail-label {
             color: var(--muted);
         }
+
         .confirm-detail-val {
             font-weight: 600;
             color: var(--text);
@@ -165,6 +181,7 @@
             padding: 14px;
             margin-bottom: 20px;
         }
+
         .confirm-cost-label {
             font-size: 12px;
             color: var(--green);
@@ -172,6 +189,7 @@
             letter-spacing: 1px;
             margin-bottom: 4px;
         }
+
         .confirm-cost-amount {
             font-size: 28px;
             font-weight: 700;
@@ -182,6 +200,7 @@
             display: flex;
             gap: 12px;
         }
+
         .confirm-actions .btn {
             flex: 1;
             height: 46px;
@@ -196,79 +215,81 @@
     <div class="modal-overlay" id="noVehicleModal" style="display:none;">
         <div class="modal" style="width: min(440px, 90vw); text-align: center; padding: 40px;">
             <div style="font-size: 64px; margin-bottom: 16px;">🚗</div>
-            <h3 style="margin-bottom: 12px; font-size: 22px;">Kayıtlı Aracınız Yok</h3>
+            <h3 style="margin-bottom: 12px; font-size: 22px;">You don't have a registered vehicle</h3>
             <p style="color: var(--muted); margin-bottom: 28px; line-height: 1.6;">
-                Rezervasyon yapabilmek için önce bir araç eklemelisiniz.<br>
-                Araçlarım sayfasından hızlıca ekleyebilirsiniz.
+                To make a reservation, you must first add a vehicle.<br>
+                You can quickly add one from the Vehicles page.
             </p>
             <a href="profile.html#vehicles" class="btn btn-primary"
                 style="width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; text-decoration: none;">
-                🚗 Araç Ekle
+                🚗 Add Vehicle
             </a>
         </div>
     </div>
 
     <div class="container res-container">
-        <h1>📅 Rezervasyon Yap</h1>
-        <p style="color:var(--muted); margin-bottom: 24px;">Şarj istasyonunuzu önceden ayırtın ve sıra beklemeyin.</p>
+        <h1>📅 Make a Reservation</h1>
+        <p style="color:var(--muted); margin-bottom: 24px;">Reserve your charging station in advance and avoid waiting.
+        </p>
 
         <form id="reservationForm" onsubmit="handleReservation(event)">
 
-            <!-- İstasyon ve Ünite -->
+            <!-- Station and Unit -->
             <div class="form-section">
-                <h3>📍 Lokasyon</h3>
+                <h3>📍 Location</h3>
                 <div class="form-group">
-                    <label>İstasyon Seçin</label>
+                    <label>Select Station</label>
                     <select class="form-control" id="resStation" onchange="loadChargers()" required>
-                        <option value="">İstasyon yükleniyor...</option>
+                        <option value="">Loading stations...</option>
                     </select>
-                    <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px; font-size:14px;" onclick="window.location.href='map.html?action=reserve'">🗺️ Haritadan Seç</button>
+                    <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px; font-size:14px;"
+                        onclick="window.location.href='map.html?action=reserve'">🗺️ Select from Map</button>
                 </div>
                 <div class="form-group">
-                    <label>Şarj Ünitesi</label>
+                    <label>Charging Unit</label>
                     <select class="form-control" id="resCharger" onchange="checkCompat()" required disabled>
-                        <option value="">Önce istasyon seçin</option>
+                        <option value="">Select a station first</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Araç -->
+            <!-- Vehicle -->
             <div class="form-section">
-                <h3>🚗 Araç</h3>
+                <h3>🚗 Vehicle</h3>
                 <div class="form-group">
-                    <label>Kullanılacak Araç</label>
+                    <label>Vehicle to Use</label>
                     <select class="form-control" id="resVehicle" onchange="checkCompat()" required>
-                        <option value="">Araç yükleniyor...</option>
+                        <option value="">Loading vehicles...</option>
                     </select>
                 </div>
                 <div id="compatBadge"></div>
             </div>
 
-            <!-- Zaman -->
+            <!-- Time Plan -->
             <div class="form-section">
-                <h3>🕐 Zaman Planı</h3>
+                <h3>🕐 Time Plan</h3>
                 <div class="form-group">
-                    <label>Tarih</label>
+                    <label>Date</label>
                     <select class="form-control" id="resDate" onchange="calculateTimeSlots()" required>
-                        <!-- Bugün ve Yarın eklenecek -->
+                        <!-- Today and Tomorrow will be added -->
                     </select>
                 </div>
                 <div style="display:flex; gap:16px;">
                     <div class="form-group" style="flex:1;">
-                        <label>Şarj Süresi</label>
+                        <label>Charging Duration</label>
                         <select class="form-control" id="resDuration" onchange="calculateTimeSlots()" required>
-                            <option value="15">15 Dakika</option>
-                            <option value="30" selected>30 Dakika</option>
-                            <option value="45">45 Dakika</option>
-                            <option value="60">1 Saat</option>
-                            <option value="90">1.5 Saat</option>
-                            <option value="120">2 Saat</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="30" selected>30 Minutes</option>
+                            <option value="45">45 Minutes</option>
+                            <option value="60">1 Hour</option>
+                            <option value="90">1.5 Hours</option>
+                            <option value="120">2 Hours</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;">
-                        <label>Başlama Saati</label>
+                        <label>Starting Time</label>
                         <select class="form-control" id="resStart" onchange="calculateCost()" required disabled>
-                            <option value="">Önce tarih ve ünite seçin</option>
+                            <option value="">Select date and unit first</option>
                         </select>
                     </div>
                 </div>
@@ -276,58 +297,58 @@
 
             <div id="costEstimate"
                 style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: 600; color: var(--text);">
-                Tahmini Tutar: <span id="costAmount">0.00</span> ₺
+                Estimated Cost: <span id="costAmount">0.00</span> ₺
             </div>
 
             <button type="submit" class="btn btn-primary" style="width:100%; height:50px; font-size:16px;"
                 id="submitBtn">
-                Rezervasyonu Onayla
+                Confirm Reservation
             </button>
         </form>
     </div>
 
-    <!-- Rezervasyon Onay Modalı -->
+    <!-- Reservation Confirmation Modal -->
     <div class="confirm-overlay" id="confirmModal">
         <div class="confirm-card">
             <div class="confirm-icon">✓</div>
-            <div class="confirm-title">Rezervasyon Onaylandı!</div>
-            <div class="confirm-subtitle">Rezervasyonunuz başarıyla oluşturuldu.</div>
+            <div class="confirm-title">Reservation Confirmed!</div>
+            <div class="confirm-subtitle">Your reservation has been successfully created.</div>
 
             <div class="confirm-details">
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">Rezervasyon No</span>
+                    <span class="confirm-detail-label">Reservation No</span>
                     <span class="confirm-detail-val" id="cfmId">-</span>
                 </div>
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">İstasyon</span>
+                    <span class="confirm-detail-label">Station</span>
                     <span class="confirm-detail-val" id="cfmStation">-</span>
                 </div>
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">Araç</span>
+                    <span class="confirm-detail-label">Vehicle</span>
                     <span class="confirm-detail-val" id="cfmVehicle">-</span>
                 </div>
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">Şarj Ünitesi</span>
+                    <span class="confirm-detail-label">Charging Unit</span>
                     <span class="confirm-detail-val" id="cfmCharger">-</span>
                 </div>
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">Tarih</span>
+                    <span class="confirm-detail-label">Date</span>
                     <span class="confirm-detail-val" id="cfmDate">-</span>
                 </div>
                 <div class="confirm-detail-row">
-                    <span class="confirm-detail-label">Saat Aralığı</span>
+                    <span class="confirm-detail-label">Time Range</span>
                     <span class="confirm-detail-val" id="cfmTime">-</span>
                 </div>
             </div>
 
             <div class="confirm-cost-box">
-                <div class="confirm-cost-label">Tahsil Edilen Tutar</div>
+                <div class="confirm-cost-label">Charged Amount</div>
                 <div class="confirm-cost-amount" id="cfmCost">0.00 ₺</div>
             </div>
 
             <div class="confirm-actions">
-                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">🏠 Panele Git</button>
-                <button class="btn btn-primary" id="cfmChargeBtn" onclick="">⚡ Şarj Başlat</button>
+                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">🏠 Dashboard</button>
+                <button class="btn btn-primary" id="cfmChargeBtn" onclick="">⚡ Start Charging</button>
             </div>
         </div>
     </div>
@@ -368,8 +389,8 @@
             const tomorrowStr = getLocalDateStr(tomorrow);
 
             dateSelect.innerHTML = `
-                <option value="${todayStr}">Bugün (${todayStr})</option>
-                <option value="${tomorrowStr}">Yarın (${tomorrowStr})</option>
+                <option value="${todayStr}">Today (${todayStr})</option>
+                <option value="${tomorrowStr}">Tomorrow (${tomorrowStr})</option>
             `;
 
             await loadData();
@@ -394,15 +415,15 @@
 
                 // İstasyonları doldur
                 const stationSelect = document.getElementById('resStation');
-                stationSelect.innerHTML = '<option value="">Seçiniz...</option>' +
+                stationSelect.innerHTML = '<option value="">Select...</option>' +
                     stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
                 // Araçları doldur
                 const vehicleSelect = document.getElementById('resVehicle');
                 if (vehicles.length === 0) {
-                    vehicleSelect.innerHTML = '<option value="">Henüz kayıtlı aracınız yok</option>';
+                    vehicleSelect.innerHTML = '<option value="">You don\'t have any registered vehicles yet</option>';
                 } else {
-                    vehicleSelect.innerHTML = '<option value="">Seçiniz...</option>' +
+                    vehicleSelect.innerHTML = '<option value="">Select...</option>' +
                         vehicles.map(v => `<option value="${v.id}">${v.brand} ${v.model} (${v.connector_type})</option>`).join('');
                 }
 
@@ -423,7 +444,7 @@
                 }
 
             } catch (err) {
-                App.showToast('Veriler yüklenirken hata oluştu: ' + err.message, 'error');
+                App.showToast('Error loading data: ' + err.message, 'error');
             }
         }
 
@@ -432,7 +453,7 @@
             const chargerSelect = document.getElementById('resCharger');
 
             if (!stationId) {
-                chargerSelect.innerHTML = '<option value="">Önce istasyon seçin</option>';
+                chargerSelect.innerHTML = '<option value="">Select...</option>';
                 chargerSelect.disabled = true;
                 checkCompat();
                 return;
@@ -443,12 +464,12 @@
 
             const isStationOffline = station && station.status === 'offline';
 
-            chargerSelect.innerHTML = '<option value="">Şarj ünitesi seçin...</option>' +
+            chargerSelect.innerHTML = '<option value="">Select...</option>' +
                 chargers.map(c => {
                     const isOffline = isStationOffline || c.status === 'offline';
                     return `
                     <option value="${c.id}" ${isOffline ? 'disabled' : ''}>
-                        ${c.type} ${c.power}kW (${c.connector_type}) - ${Number(c.price_per_kwh).toFixed(2)} ₺/kWh ${isOffline ? '(Çevrimdışı)' : ''}
+                        ${c.type} ${c.power}kW (${c.connector_type}) - ${Number(c.price_per_kwh).toFixed(2)} ₺/kWh ${isOffline ? '(Offline)' : ''}
                     </option>
                 `}).join('');
 
@@ -466,7 +487,6 @@
             badge.innerHTML = '';
             submitBtn.disabled = false;
 
-            // Şarj ünitesi ve tarih değiştiyse müsaitlik hesapla
             calculateTimeSlots();
 
             if (!stationId || !chargerId || !vehicleId) return;
@@ -478,9 +498,9 @@
             const isCompatible = Reservation.checkCompatibility(vehicle, charger);
 
             if (isCompatible) {
-                badge.innerHTML = `<div class="compat-ok">✅ Aracınızla uyumlu! (${vehicle.connector_type})</div>`;
+                badge.innerHTML = `<div class="compat-ok">✅ Compatible! (${vehicle.connector_type})</div>`;
             } else {
-                badge.innerHTML = `<div class="compat-no">❌ Uyumsuz Konnektör!<br>Araç: ${vehicle.connector_type} | Ünite: ${charger.connector_type}</div>`;
+                badge.innerHTML = `<div class="compat-no">❌ Incompatible Connector!<br>Vehicle: ${vehicle.connector_type} | Charger: ${charger.connector_type}</div>`;
                 submitBtn.disabled = true;
             }
         }
@@ -492,12 +512,12 @@
             const startSelect = document.getElementById('resStart');
 
             if (!chargerId || !date) {
-                startSelect.innerHTML = '<option value="">Önce tarih ve ünite seçin</option>';
+                startSelect.innerHTML = '<option value="">Select date and charger first</option>';
                 startSelect.disabled = true;
                 return;
             }
 
-            startSelect.innerHTML = '<option value="">Hesaplanıyor...</option>';
+            startSelect.innerHTML = '<option value="">Calculating...</option>';
             startSelect.disabled = true;
 
             try {
@@ -568,22 +588,22 @@
                         if (isConflict) {
                             // slotsHTML += `<option value="" disabled>${slotStr} (Dolu)</option>`; // İstenirse dolu olanlar gösterilebilir
                         } else {
-                            slotsHTML += `<option value="${slotStr}">${slotStr} (${durationMins} dk)</option>`;
+                            slotsHTML += `<option value="${slotStr}">${slotStr} (${durationMins} min)</option>`;
                             hasAvailable = true;
                         }
                     }
                 }
 
                 if (!hasAvailable) {
-                    startSelect.innerHTML = '<option value="">Bu gün için boş saat yok</option>';
+                    startSelect.innerHTML = '<option value="">No available slots for today</option>';
                     startSelect.disabled = true;
                 } else {
-                    startSelect.innerHTML = '<option value="">Saat seçin...</option>' + slotsHTML;
+                    startSelect.innerHTML = '<option value="">Select a time...</option>' + slotsHTML;
                     startSelect.disabled = false;
                 }
 
             } catch (err) {
-                startSelect.innerHTML = '<option value="">Hata oluştu</option>';
+                startSelect.innerHTML = '<option value="">Error occurred</option>';
             }
             calculateCost();
         }
@@ -624,11 +644,10 @@
             const durationMins = parseInt(document.getElementById('resDuration').value);
 
             if (!startSlot) {
-                App.showToast('Lütfen uygun bir başlama saati seçin.', 'error');
+                App.showToast('Please select a start time', 'error');
                 return;
             }
 
-            // Bitiş saatini hesapla
             const [sh, sm] = startSlot.split(':').map(Number);
             const totalMins = sm + durationMins;
             const eh = sh + Math.floor(totalMins / 60);
@@ -636,7 +655,7 @@
             const endSlot = `${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'İşleniyor...';
+            submitBtn.textContent = 'Processing...';
 
             try {
                 const res = await Reservation.create({
@@ -651,14 +670,14 @@
                 if (res.success) {
                     showConfirmation(res.reservation, startSlot, endSlot, date);
                 } else {
-                    App.showToast('❌ Hata: ' + res.message, 'error');
+                    App.showToast('❌ ' + res.message, 'error');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Rezervasyonu Onayla';
+                    submitBtn.textContent = 'Confirm Reservation';
                 }
             } catch (err) {
                 App.showToast('❌ ' + err.message, 'error');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Rezervasyonu Onayla';
+                submitBtn.textContent = 'Confirm Reservation';
             }
         }
 
@@ -690,8 +709,7 @@
             const modal = document.getElementById('confirmModal');
             modal.classList.add('show');
 
-            // Toast da göster
-            App.showToast('✅ Rezervasyon başarıyla onaylandı!');
+            App.showToast('✅ Reservation confirmed!');
         }
     </script>
 </body>

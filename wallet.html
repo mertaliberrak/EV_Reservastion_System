@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EVCharge — Cüzdan</title>
+    <title>EVCharge — Wallet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
@@ -12,51 +13,60 @@
             max-width: 600px;
             margin: 0 auto;
         }
+
         .balance-card {
-            background: linear-gradient(135deg, rgba(0,229,160,.1) 0%, rgba(0,168,232,.1) 100%);
+            background: linear-gradient(135deg, rgba(0, 229, 160, .1) 0%, rgba(0, 168, 232, .1) 100%);
             border: 1px solid var(--green);
             border-radius: var(--radius-lg);
             padding: 40px;
             text-align: center;
             margin-bottom: 24px;
         }
+
         .balance-title {
             font-size: 16px;
             color: var(--muted);
             margin-bottom: 8px;
         }
+
         .balance-amount {
             font-size: 48px;
             font-weight: 700;
             color: var(--text);
             margin-bottom: 24px;
         }
+
         .add-funds-section {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 24px;
         }
+
         .add-funds-section h3 {
             margin-bottom: 16px;
             font-size: 18px;
         }
+
         .amount-input-wrapper {
             display: flex;
             gap: 12px;
             margin-bottom: 16px;
         }
+
         .amount-input-wrapper input {
             flex: 1;
             font-size: 18px;
             padding: 12px;
         }
+
         .quick-amounts {
             display: flex;
             gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
         }
+
         .quick-btn {
             background: var(--card2);
             border: 1px solid var(--border);
@@ -66,10 +76,12 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .quick-btn:hover {
             border-color: var(--green);
             color: var(--green);
         }
+
         .no-cards-msg {
             color: var(--muted);
             text-align: center;
@@ -78,26 +90,27 @@
         }
     </style>
 </head>
+
 <body>
     <header class="navbar" id="navbar"></header>
 
     <div class="container wallet-container">
-        <h1>💳 Dijital Cüzdan</h1>
-        <p style="color:var(--muted); margin-bottom: 24px;">Bakiyenizi yönetin ve rezervasyon ödemelerinizi kolayca yapın.</p>
+        <h1>💳 Digital Wallet</h1>
+        <p style="color:var(--muted); margin-bottom: 24px;">Manage your balance and make reservation payments easily.
+        </p>
 
         <div class="balance-card">
-            <div class="balance-title">Mevcut Bakiye</div>
+            <div class="balance-title">Current Balance</div>
             <div class="balance-amount" id="currentBalance">0.00 ₺</div>
         </div>
 
         <div class="add-funds-section">
-            <h3>Bakiye Yükle</h3>
+            <h3>Add Funds</h3>
 
-            <!-- Kart Seçimi -->
             <div class="form-group" style="margin-bottom: 16px;">
-                <label for="walletCardSelect">Ödeme Kartı</label>
+                <label for="walletCardSelect">Payment Card</label>
                 <select class="form-control" id="walletCardSelect">
-                    <option value="">Yükleniyor...</option>
+                    <option value="">Loading...</option>
                 </select>
             </div>
 
@@ -110,14 +123,15 @@
 
             <form id="addFundsForm" onsubmit="handleAddFunds(event)">
                 <div class="amount-input-wrapper">
-                    <input type="number" id="fundAmount" class="form-control" placeholder="Tutar girin (Örn: 250)" min="1" step="0.1" required />
-                    <button type="submit" class="btn btn-primary" id="addBtn">Yükle</button>
+                    <input type="number" id="fundAmount" class="form-control" placeholder="Enter amount (e.g., 250)"
+                        min="1" step="0.1" required />
+                    <button type="submit" class="btn btn-primary" id="addBtn">Add</button>
                 </div>
             </form>
 
             <div id="noCardsMsg" class="no-cards-msg" style="display:none;">
-                Henüz kayıtlı kartınız yok. 
-                <a href="profile.html" style="color:var(--green);">Profil → Kartlarım</a> kısmından kart ekleyebilirsiniz.
+                You don't have any registered cards yet.
+                <a href="profile.html" style="color:var(--green);">Profile → My Cards</a> to add a card.
             </div>
         </div>
     </div>
@@ -132,18 +146,17 @@
             const user = await App.requireAuth();
             if (!user) return;
             App.renderNavbar('wallet');
-            
+
             updateBalanceUI(user.balance || 0);
-            
-            // Sunucudan güncel bakiyeyi tekrar teyit et
+
             try {
                 const userData = await API.getMe();
                 updateBalanceUI(userData.user.balance || 0);
             } catch (err) {
-                console.error('Bakiye alınamadı', err);
+                console.error('Failed to fetch balance', err);
             }
 
-            // Kayıtlı kartları yükle
+            // Load registered cards
             await loadCards();
         })();
 
@@ -155,7 +168,7 @@
                 const form = document.getElementById('addFundsForm');
 
                 if (!userCards || userCards.length === 0) {
-                    select.innerHTML = '<option value="">Kayıtlı kart yok</option>';
+                    select.innerHTML = '<option value="">No registered cards</option>';
                     select.disabled = true;
                     noCardsMsg.style.display = 'block';
                     form.querySelector('button[type="submit"]').disabled = true;
@@ -165,11 +178,11 @@
                 noCardsMsg.style.display = 'none';
                 select.disabled = false;
                 form.querySelector('button[type="submit"]').disabled = false;
-                select.innerHTML = userCards.map(c => 
+                select.innerHTML = userCards.map(c =>
                     `<option value="${c.id}">${c.card_name} — ${c.card_number}</option>`
                 ).join('');
             } catch (err) {
-                console.error('Kartlar yüklenemedi', err);
+                console.error('Failed to load cards', err);
             }
         }
 
@@ -190,32 +203,33 @@
             const cardId = cardSelect.value;
 
             if (!amount || amount <= 0) {
-                App.showToast('Geçerli bir tutar girin', 'error');
+                App.showToast('Enter a valid amount', 'error');
                 return;
             }
 
             if (!cardId) {
-                App.showToast('Lütfen bir ödeme kartı seçin', 'error');
+                App.showToast('Please select a payment card', 'error');
                 return;
             }
 
             btn.disabled = true;
-            btn.textContent = 'İşleniyor...';
+            btn.textContent = 'Processing...';
 
             try {
                 const res = await API.addBalance(amount, parseInt(cardId));
                 App.showToast('✅ ' + res.message);
-                // Güncel bakiyeyi çek
+                // Fetch updated balance
                 const userData = await API.getMe();
                 updateBalanceUI(userData.user.balance || 0);
                 amountInput.value = '';
             } catch (err) {
-                App.showToast('Hata: ' + err.message, 'error');
+                App.showToast('Error: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Yükle';
+                btn.textContent = 'Add';
             }
         }
     </script>
 </body>
+
 </html>

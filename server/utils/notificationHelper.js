@@ -7,11 +7,11 @@ const db = require('../db');
 
 /**
  * Kullanıcıya bildirim oluştur
- * @param {number} userId - Bildirim alacak kullanıcı ID
- * @param {string} type - Bildirim tipi: 'reservation_created', 'reservation_cancelled', 'station_offline', 'admin_cancelled'
- * @param {string} title - Bildirim başlığı
- * @param {string} message - Bildirim mesajı
- * @param {object} options - Opsiyonel alanlar { reservationId, stationName }
+ * @param {number} userId - Notification recipient user ID
+ * @param {string} type - Notification type: 'reservation_created', 'reservation_cancelled', 'station_offline', 'admin_cancelled'
+ * @param {string} title - Notification title
+ * @param {string} message - Notification message
+ * @param {object} options - Optional fields { reservationId, stationName }
  */
 function createNotification(userId, type, title, message, options = {}) {
     try {
@@ -27,7 +27,7 @@ function createNotification(userId, type, title, message, options = {}) {
             options.stationName || null
         );
     } catch (err) {
-        console.error('Bildirim oluşturma hatası:', err);
+        console.error('Notification creation error:', err);
     }
 }
 
