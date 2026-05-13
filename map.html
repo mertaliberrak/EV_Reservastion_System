@@ -353,7 +353,7 @@
                     visible = chargers.some(c => (c.price_per_kwh || c.pricePerKwh) <= Number(filters.maxPrice));
                 }
                 if (visible && filters.statusFilter && filters.statusFilter !== 'all') {
-                    visible = MapModule.getStationOverallStatus(station) === filters.statusFilter;
+                    visible = chargers.some(c => c.status === filters.statusFilter);
                 }
                 return visible;
             });

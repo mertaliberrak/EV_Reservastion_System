@@ -228,8 +228,7 @@ const MapModule = {
             }
 
             if (visible && statusFilter && statusFilter !== 'all') {
-                const overallStatus = this.getStationOverallStatus(station);
-                visible = overallStatus === statusFilter;
+                visible = chargers.some(c => c.status === statusFilter);
             }
 
             marker.setVisible(visible);
