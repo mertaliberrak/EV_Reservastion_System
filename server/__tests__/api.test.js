@@ -120,7 +120,7 @@ describe('Unit Tests — Vehicle Management', () => {
 // ══════════════════════════════════════
 describe('Component Tests — Reservation System', () => {
     const now = new Date();
-    const futureStart = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const futureStart = new Date(now.getTime() + 48 * 60 * 60 * 1000);
     const today = futureStart.toISOString().split('T')[0];
     const hh = String(futureStart.getHours()).padStart(2, '0');
     const startSlot = `${hh}:00`;
