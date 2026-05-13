@@ -409,22 +409,22 @@
     <div class="container">
         <!-- Hero -->
         <div class="recommend-hero">
-            <h1>🎯 Akıllı <span>İstasyon Tavsiyesi</span></h1>
-            <p>Konumunuza, aracınıza ve bütçenize en uygun şarj istasyonunu bulalım.</p>
+            <h1>🎯 Smart <span>Station Recommendation</span></h1>
+            <p>Let's find the most suitable charging station for your location, vehicle, and budget.</p>
         </div>
 
         <!-- Filter Bar -->
         <div class="filter-bar" id="filterBar">
             <div class="filter-group">
-                <label for="vehicleSelect">🚗 Aracınız</label>
+                <label for="vehicleSelect">🚗 Your vehicle</label>
                 <select class="form-control" id="vehicleSelect">
-                    <option value="">Araç seçin (isteğe bağlı)</option>
+                    <option value="">Select a vehicle (optional)</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label for="maxDistance">📍 Maks. Mesafe</label>
+                <label for="maxDistance">📍 Max. Distance</label>
                 <select class="form-control" id="maxDistance">
-                    <option value="">Sınırsız</option>
+                    <option value="">Unlimited</option>
                     <option value="5">5 km</option>
                     <option value="10" selected>10 km</option>
                     <option value="25">25 km</option>
@@ -434,10 +434,10 @@
             </div>
             <div class="filter-group" style="flex:0 0 auto;">
                 <div class="loc-status" id="locStatus">
-                    <span class="dot pending"></span> Konum alınıyor...
+                    <span class="dot pending"></span> Getting location...
                 </div>
                 <button class="btn-search" id="searchBtn" onclick="searchRecommendations()" disabled>
-                    🔍 Tavsiye Al
+                    🔍 Get Recommendation
                 </button>
             </div>
         </div>
@@ -446,7 +446,7 @@
         <div id="resultsArea">
             <div class="empty-state">
                 <div class="empty-icon">🎯</div>
-                <p>Konumunuz alındıktan sonra "Tavsiye Al" butonuna tıklayın.</p>
+                <p>After your location is obtained, click the "Get Recommendation" button.</p>
             </div>
         </div>
     </div>
@@ -486,14 +486,14 @@
         function acquireLocation() {
             const locEl = document.getElementById('locStatus');
             if (!navigator.geolocation) {
-                locEl.innerHTML = '<span class="dot" style="background:var(--danger)"></span> Tarayıcınız konum desteklemiyor.';
+                locEl.innerHTML = '<span class="dot" style="background:var(--danger)"></span> Your browser does not support location.';
                 return;
             }
             navigator.geolocation.getCurrentPosition(
                 pos => {
                     userLat = pos.coords.latitude;
                     userLng = pos.coords.longitude;
-                    locEl.innerHTML = '<span class="dot active"></span> Konum alındı ✓';
+                    locEl.innerHTML = '<span class="dot active"></span> Location obtained ✓';
                     document.getElementById('searchBtn').disabled = false;
                     // Otomatik arama yap
                     searchRecommendations();
@@ -502,7 +502,7 @@
                     // İzmir varsayılan
                     userLat = 38.4237;
                     userLng = 27.1428;
-                    locEl.innerHTML = '<span class="dot active"></span> Varsayılan konum (İzmir)';
+                    locEl.innerHTML = '<span class="dot active"></span> Default location (Izmir)';
                     document.getElementById('searchBtn').disabled = false;
                     searchRecommendations();
                 }
@@ -512,7 +512,7 @@
         // ── Tavsiye ara ──
         async function searchRecommendations() {
             const area = document.getElementById('resultsArea');
-            area.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--muted);">Tavsiyeler hesaplanıyor...</p></div>';
+            area.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--muted);">Calculating recommendations...</p></div>';
 
             const vehicleId = document.getElementById('vehicleSelect').value || undefined;
             const maxDist = document.getElementById('maxDistance').value || undefined;
@@ -529,16 +529,16 @@
                     area.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-icon">😕</div>
-                            <p>${data.message || 'Kriterlere uygun istasyon bulunamadı.'}</p>
-                            <button class="btn btn-secondary" onclick="document.getElementById('maxDistance').value='';searchRecommendations()">Mesafe sınırını kaldır</button>
+                            <p>${data.message || 'No stations found matching your criteria.'}</p>
+                            <button class="btn btn-secondary" onclick="document.getElementById('maxDistance').value='';searchRecommendations()">Remove distance limit</button>
                         </div>`;
                     return;
                 }
 
                 let html = `
                     <div class="results-summary">
-                        <h2>📊 Tavsiye Sonuçları</h2>
-                        <span class="result-count">${recs.length} istasyon bulundu</span>
+                        <h2>📊 Recommendation Results</h2>
+                        <span class="result-count">${recs.length} stations found</span>
                     </div>`;
 
                 recs.forEach((rec, i) => {
@@ -556,13 +556,13 @@
                                 <div class="score-circle" style="border-color:${scoreColor};color:${scoreColor}">
                                     ${rec.recommendation_score}
                                 </div>
-                                <div class="score-label">Skor</div>
+                                <div class="score-label">Score</div>
                             </div>
 
                             <!-- Info -->
                             <div class="rec-info-col">
                                 <div class="rec-station-name">
-                                    ${rec.is_top_pick ? '<span class="top-pick-badge">⭐ En İyi</span>' : ''}
+                                    ${rec.is_top_pick ? '<span class="top-pick-badge">⭐ Best</span>' : ''}
                                     ${rec.name}
                                 </div>
                                 <div class="rec-address">📍 ${rec.address}</div>
@@ -570,19 +570,19 @@
                                 <div class="rec-stats">
                                     <div class="rec-stat">
                                         <span class="stat-val">${rec.distance_km} km</span>
-                                        <span class="stat-lbl">Mesafe</span>
+                                        <span class="stat-lbl">Distance</span>
                                     </div>
                                     <div class="rec-stat">
                                         <span class="stat-val">${Number(rec.min_price).toFixed(2)} ₺</span>
-                                        <span class="stat-lbl">kWh Fiyat</span>
+                                        <span class="stat-lbl">Price</span>
                                     </div>
                                     <div class="rec-stat">
                                         <span class="stat-val">${rec.available_chargers_count}/${rec.total_chargers_count}</span>
-                                        <span class="stat-lbl">Müsait</span>
+                                        <span class="stat-lbl">Available</span>
                                     </div>
                                     <div class="rec-stat">
                                         <span class="stat-val">${rec.max_power} kW</span>
-                                        <span class="stat-lbl">Maks. Güç</span>
+                                        <span class="stat-lbl">Max Power</span>
                                     </div>
                                 </div>
 
@@ -607,9 +607,9 @@
 
                             <!-- Actions -->
                             <div class="rec-actions-col">
-                                <a href="station-detail.html?id=${rec.id}" class="btn btn-secondary btn-sm" style="width:100%;">🔍 Detay</a>
-                                <a href="reservation.html?station=${rec.id}" class="btn btn-primary btn-sm" style="width:100%;">📅 Rezervasyon</a>
-                                <a href="https://www.google.com/maps/dir/?api=1&destination=${rec.lat},${rec.lng}" target="_blank" class="btn btn-secondary btn-sm" style="width:100%;color:var(--accent);border-color:rgba(0,168,232,.3);">🧭 Yol Tarifi</a>
+                                <a href="station-detail.html?id=${rec.id}" class="btn btn-secondary btn-sm" style="width:100%;">🔍 Details</a>
+                                <a href="reservation.html?station=${rec.id}" class="btn btn-primary btn-sm" style="width:100%;">📅 Reservation</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&destination=${rec.lat},${rec.lng}" target="_blank" class="btn btn-secondary btn-sm" style="width:100%;color:var(--accent);border-color:rgba(0,168,232,.3);">🧭 Directions</a>
                             </div>
                         </div>
                     </div>`;
@@ -617,7 +617,7 @@
 
                 area.innerHTML = html;
             } catch (err) {
-                area.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>Hata: ${err.message}</p></div>`;
+                area.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>Error: ${err.message}</p></div>`;
             }
         }
     </script>
