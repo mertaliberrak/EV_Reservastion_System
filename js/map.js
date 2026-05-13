@@ -213,26 +213,44 @@ const MapModule = {
             const station = marker.stationData;
             const chargers = station.chargers || [];
 
-            let visible = true;
+            // First, narrow down chargers by connector/power/price filters
+            let matchingChargers = [...chargers];
 
             if (connectorType) {
-                visible = chargers.some(c => c.connector_type === connectorType || c.connectorType === connectorType);
+                matchingChargers = matchingChargers.filter(c => c.connector_type === connectorType || c.connectorType === connectorType);
+            }
+            if (minPower) {
+                matchingChargers = matchingChargers.filter(c => c.power >= Number(minPower));
+            }
+            if (maxPrice) {
+                matchingChargers = matchingChargers.filter(c => (c.price_per_kwh || c.pricePerKwh) <= Number(maxPrice));
             }
 
-            if (visible && minPower) {
-                visible = chargers.some(c => c.power >= Number(minPower));
-            }
+            let visible = matchingChargers.length > 0;
 
-            if (visible && maxPrice) {
-                visible = chargers.some(c => (c.price_per_kwh || c.pricePerKwh) <= Number(maxPrice));
-            }
-
+            // Status filter: check within the already-filtered chargers
             if (visible && statusFilter && statusFilter !== 'all') {
-                visible = chargers.some(c => c.status === statusFilter);
+                visible = matchingChargers.some(c => c.status === statusFilter);
             }
 
             marker.setVisible(visible);
+
+            // Update marker icon color based on filtered chargers' status
+            if (visible) {
+                const filteredStatus = this.getFilteredStatus(matchingChargers);
+                marker.setIcon(this.getMarkerIcon(filteredStatus));
+            }
         });
+    },
+
+    // ── Determine status from a subset of chargers ──
+    getFilteredStatus(chargers) {
+        if (chargers.length === 0) return 'offline';
+        const allOffline = chargers.every(c => c.status === 'offline');
+        if (allOffline) return 'offline';
+        const hasAvailable = chargers.some(c => c.status === 'available');
+        if (hasAvailable) return 'available';
+        return 'occupied';
     },
 
     // ── Navigasyon yönlendirmesi (GM-06) ──
